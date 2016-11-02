@@ -1,0 +1,35 @@
+language: ruby
+rvm:
+  - ruby-2.3.1
+  - ruby-2.2.5
+  - ruby-head
+  - rubinius-3.62
+  - rubinius
+  - jruby-9.1.5.0
+  - jruby-head
+branches:
+  only:
+    - master
+before_install:
+  - git submodule update --init --recursive
+  - gem install ffi
+  - sudo apt-get install libev-dev
+  - sudo wget http://packages.couchbase.com/releases/4.5.1/couchbase-server-enterprise_4.5.1-ubuntu14.04_amd64.deb
+  - sudo dpkg -i couchbase-server-enterprise_4.5.1-ubuntu14.04_amd64.deb
+  - sleep 4
+  - sudo service couchbase-server status
+  - /opt/couchbase/bin/couchbase-cli cluster-init -c 127.0.0.1:8091 --cluster-username=admin --cluster-password=password --cluster-ramsize=320 --cluster-index-ramsize=256 --cluster-fts-ramsize=256 --services=data,index,query,fts
+  - sleep 4
+  - /opt/couchbase/bin/couchbase-cli server-info   -c 127.0.0.1:8091 -u admin -p password
+  - /opt/couchbase/bin/couchbase-cli bucket-create -c 127.0.0.1:8091 -u admin -p password --bucket=default --bucket-type=couchbase --bucket-ramsize=160 --bucket-replica=0 --wait
+  - /opt/couchbase/bin/couchbase-cli bucket-create -c 127.0.0.1:8091 -u admin -p password --bucket=test    --bucket-type=couchbase --bucket-ramsize=160 --bucket-replica=0 --bucket-password=password123 --enable-flush=1 --wait
+  - /opt/couchbase/bin/cbrestore -x rehash=1 -b default -B default -u admin -p password ./spec/seed http://127.0.0.1:8091
+before_script:
+  - rake compile
+matrix:
+  allow_failures:
+    - rvm: jruby-head
+    - rvm: ruby-head
+    - rvm: rubinius
+sudo: required
+dist: trusty
