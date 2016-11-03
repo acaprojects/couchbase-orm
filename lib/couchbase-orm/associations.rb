@@ -21,11 +21,10 @@ module CouchbaseOrm
                 assoc = (options[:class_name] || name.to_s.camelize).constantize
 
                 # Create the local setter / getter
-                attribute(ref)
-                define_method(ref_ass) do
-                    super
-                    remove_instance_variable(instance_var)
-                end
+                attribute(ref) { |value|
+                    remove_instance_variable(instance_var) if instance_variable_defined?(instance_var)
+                    value
+                }
 
                 # Define reader
                 define_method(name) do
@@ -77,7 +76,7 @@ module CouchbaseOrm
             assoc = self.class.associations
             assoc.each do |name, _|
                 instance_var = :"@__assoc_#{name}"
-                remove_instance_variable(instance_var)
+                remove_instance_variable(instance_var) if instance_variable_defined?(instance_var)
             end
         end
     end

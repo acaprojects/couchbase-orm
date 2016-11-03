@@ -73,22 +73,47 @@ module CouchbaseOrm
                 end
 
                 define_method(:"#{name}=") do |value|
+                    value = yield(value) if block_given?
                     write_attribute(name, value)
                 end
             end
         end
 
         def self.attributes
-            @attributes
+            @attributes ||= {}
+        end
+
+        def self.find(*ids, **options)
+            options[:extended] = true
+            options[:quiet] ||= false
+
+            ids = ids.flatten
+            records = bucket.get(*ids, **options)
+
+            records = records.is_a?(Array) ? records : [records]
+            records.map! { |record|
+                if record
+                    self.new(record)
+                else
+                    false
+                end
+            }
+            records.select! { |rec| rec }
+            ids.length > 1 ? records : records[0]
+        end
+
+        def self.find_by_id(*ids, **options)
+            options[:quiet] = true
+            find *ids, **options
         end
 
 
         # Add support for libcouchbase response objects
-        def initialize(attributes = {}, ignore_doc_type: false)
+        def initialize(model = nil, ignore_doc_type: false, **attributes)
             @__metadata__   = Metadata.new
 
             # Assign default values
-            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new
+            @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new({type: self.class.design_document})
             self.class.attributes.each do |key, options|
                 default = options[:default]
                 if default.respond_to?(:call)
@@ -98,20 +123,29 @@ module CouchbaseOrm
                 end
             end
 
-            if attributes.is_a? ::Libcouchbase::Response
-                doc = attributes.value || raise('empty response provided')
-                type = doc[:type]
+            if model
+                case model
+                when ::Libcouchbase::Response
+                    doc = model.value || raise('empty response provided')
+                    type = doc.delete(:type)
+                    doc.delete(:id)
 
-                if type && !ignore_doc_type && type.to_s != self.class.design_document
-                    raise "document type mismatch, #{type} != #{self.class.design_document}"
+                    if type && !ignore_doc_type && type.to_s != self.class.design_document
+                        raise "document type mismatch, #{type} != #{self.class.design_document}"
+                    end
+
+                    @__metadata__.key = model.key
+                    @__metadata__.cas = model.cas
+
+                    # This ensures that defaults are applied
+                    super(**doc)
+                when CouchbaseOrm::Base
+                    attributes = model.attributes
+                    attributes.delete(:id)
+                    super(**attributes)
+                else
+                    super(**attributes.merge(Hash(model)))
                 end
-                
-                @__metadata__.key = attributes.key
-                @__metadata__.cas = attributes.cas
-
-                # This ensures that defaults are applied
-                doc.delete(:id)
-                super(**doc)
             else
                 super(**attributes)
             end
@@ -154,7 +188,9 @@ module CouchbaseOrm
         #
 
         def attributes
-            @__attributes__.merge({id: id})
+            copy = @__attributes__.merge({id: id})
+            copy.delete(:type)
+            copy
         end
 
         def attributes=(attributes)
@@ -164,8 +200,51 @@ module CouchbaseOrm
             end
         end
 
+
+        #
+        # Add support for comparisons
+        #
+
+        # Public: Allows for access to ActiveModel functionality.
+        #
+        # Returns self.
         def to_model
             self
+        end
+
+        # Public: Hashes our unique key instead of the entire object.
+        # Ruby normally hashes an object to be used in comparisons.  In our case
+        # we may have two techincally different objects referencing the same entity id,
+        # so we will hash just the class and id (via to_key) to compare so we get the
+        # expected result
+        #
+        # Returns a string representing the unique key.
+        def hash
+            "#{self.class.name}-#{self.id}-#{@__metadata__.cas}-#{@__attributes__.hash}".hash
+        end
+
+        # Public: Overrides eql? to use == in the comparison.
+        #
+        # other - Another object to compare to
+        #
+        # Returns a boolean.
+        def eql?(other)
+            self == other
+        end
+
+        # Public: Overrides == to compare via class and entity id.
+        #
+        # other - Another object to compare to
+        #
+        # Example
+        #
+        #     movie = Movie.find(1234)
+        #     movie.to_key
+        #     # => 'movie-1234'
+        #
+        # Returns a string representing the unique key.
+        def ==(other)
+            hash == other.hash
         end
     end
 end
