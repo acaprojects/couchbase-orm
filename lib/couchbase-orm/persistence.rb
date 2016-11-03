@@ -114,6 +114,9 @@ module CouchbaseOrm
         #
         # There's a series of callbacks associated with #destroy.
         def destroy(with_cas: false, **options)
+            return self if destroyed?
+            raise 'model not persisted' unless persisted?
+
             run_callbacks :destroy do
                 destroy_associations!
 
