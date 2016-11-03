@@ -31,8 +31,18 @@ module CouchbaseOrm
 
             # keep the attribute's value within bounds
             before_save do |record|
-                record[name] = record[name].to_i
-                record[name] = (1..values.length).cover?(record[name]) ? record[name] : default_value
+                value = record[name]
+
+                unless value.nil?
+                    value = case value
+                    when Symbol, String
+                        record.class.const_get(name.to_s.upcase)[value.to_sym]
+                    else
+                        Integer(value)
+                    end
+                end
+                
+                record[name] = (1..values.length).cover?(value) ? value : default_value
             end
         end
     end

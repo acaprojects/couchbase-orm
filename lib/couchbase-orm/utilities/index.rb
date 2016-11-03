@@ -100,8 +100,8 @@ module CouchbaseOrm
             # a copy of the current bucket key for comparison if any of the key
             # components have been modified
             before_save do |record|
-                if attrs.any? {|attr| attr.in?(record.changes)}
-                    args = attrs.collect {|attr| send(:"#{attr}_was") || send(attr)}
+                if attrs.any? { |attr| record.changes.include?(attr) }
+                    args = attrs.collect { |attr| send(:"#{attr}_was") || send(attr) }
                     instance_variable_set(original_bucket_key_var, self.class.send(class_bucket_key_method, *args))
                 end
             end
@@ -111,7 +111,7 @@ module CouchbaseOrm
             after_save do |record|
                 original_key = instance_variable_get(original_bucket_key_var)
                 record.class.bucket.delete(original_key, quiet: true) if original_key
-                record.class.bucket.set(record.send(bucket_key_method), record.id)
+                record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
                 instance_variable_set(original_bucket_key_var, nil)
             end
 
