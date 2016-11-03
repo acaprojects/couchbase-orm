@@ -2,12 +2,12 @@
 
 module CouchbaseOrm
     class Error < ::StandardError
-        def initialize(*args, model: nil)
-            super(*args)
-            @model = model
+        attr_reader :record
+        
+        def initialize(message = nil, record = nil)
+            @record = record
+            super(message)
         end
-
-        attr_reader :model
 
         class RecordInvalid < Error; end
         class RecordExists < Error; end

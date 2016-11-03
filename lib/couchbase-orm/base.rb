@@ -3,6 +3,7 @@
 
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
+require 'couchbase-orm/error'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/utilities/join'
@@ -59,12 +60,12 @@ module CouchbaseOrm
             @uuid_generator = generator
         end
 
-        def self.attribute(*names, default: nil, **options)
+        def self.attribute(*names, **options)
             @attributes ||= {}
             names.each do |name|
                 name = name.to_sym
 
-                @attributes[name] = default
+                @attributes[name] = options
                 next if self.instance_methods.include?(name)
 
                 define_method(name) do
@@ -77,7 +78,7 @@ module CouchbaseOrm
             end
         end
 
-        def self.default_attributes
+        def self.attributes
             @attributes
         end
 
@@ -88,11 +89,12 @@ module CouchbaseOrm
 
             # Assign default values
             @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new
-            self.class.default_attributes.each do |key, value|
-                if value.respond_to?(:call)
-                    @__attributes__[key] = value.call
+            self.class.attributes.each do |key, options|
+                default = options[:default]
+                if default.respond_to?(:call)
+                    @__attributes__[key] = default.call
                 else
-                    @__attributes__[key] = value
+                    @__attributes__[key] = default
                 end
             end
 
@@ -137,6 +139,10 @@ module CouchbaseOrm
         alias_method :[], :read_attribute
 
         def write_attribute(attr_name, value)
+            unless value.nil?
+                coerce = self.class.attributes[attr_name][:type]
+                value = Kernel.send(coerce.to_s, value) if coerce
+            end
             attribute_will_change!(attr_name) unless @__attributes__[attr_name] == value
             @__attributes__[attr_name] = value
         end

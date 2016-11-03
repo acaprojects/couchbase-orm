@@ -65,7 +65,7 @@ module CouchbaseOrm
                     when :destroy, :delete
                         model.send(dependent)
                     when :restrict_with_exception
-                        raise RecordExists.new("#{self.class.name} instance maintains a restricted reference to #{name}", model: self)
+                        raise RecordExists.new("#{self.class.name} instance maintains a restricted reference to #{name}", self)
                     when :restrict_with_error
                         # TODO::
                     end

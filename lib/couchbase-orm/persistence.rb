@@ -31,7 +31,7 @@ module CouchbaseOrm
 
             # Raise an error if validation failed.
             def fail_validate!(document)
-                raise Errors::RecordInvalid.new(document)
+                raise Error::RecordInvalid.new("Failed to save the record", document)
             end
 
             # Allow classes to overwrite the default document name
@@ -76,6 +76,7 @@ module CouchbaseOrm
         # If the model is new, a record gets created in the database, otherwise
         # the existing record gets updated.
         def save(**options)
+            raise "Cannot save a destroyed document!" if destroyed?
             self.new_record? ? _create_record(**options) : _update_record(**options)
         end
 
@@ -88,7 +89,7 @@ module CouchbaseOrm
         # CouchbaseOrm::Error::RecordInvalid gets raised, and the record won't be saved.
         def save!
             self.class.fail_validate!(self) unless self.save
-            true
+            self
         end
 
         # Deletes the record in the database and freezes this instance to
@@ -123,8 +124,7 @@ module CouchbaseOrm
                 @id = nil
 
                 clear_changes_information
-                self.freeze
-                self
+                freeze
             end
         end
         alias_method :destroy!, :destroy
@@ -183,8 +183,6 @@ module CouchbaseOrm
 
 
         def _update_record(with_cas: false, **options)
-            raise "Cannot save a destroyed document!" if destroyed?
-            raise "Calling #{self.class.name}#update on document that has not been created!" if new_record?
             return false unless perform_validations(options)
             return true unless changed?
 
@@ -197,19 +195,20 @@ module CouchbaseOrm
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
                     resp = self.class.bucket.replace(_id, @__attributes__, **options)
-                    
+
                     # Ensure the model is up to date
                     @__metadata__.key = resp.key
                     @__metadata__.cas = resp.cas
 
                     clear_changes_information
-                    self
+                    true
                 end
             end
         end
 
         def _create_record(**options)
             return false unless perform_validations(options)
+
             run_callbacks :create do
                 run_callbacks :save do
                     # Ensure the type is set
@@ -224,13 +223,14 @@ module CouchbaseOrm
                     @__metadata__.cas = resp.cas
 
                     clear_changes_information
-                    self
+                    true
                 end
             end
         end
 
         def perform_validations(options = {})
-            options[:validate] != false ? valid? : true
+            return valid? if options[:validate] != false
+            true
         end
     end
 end
