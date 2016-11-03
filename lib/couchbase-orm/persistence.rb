@@ -135,7 +135,7 @@ module CouchbaseOrm
         # * Validation is skipped.
         # * \Callbacks are invoked.
         def update_attribute(name, value)
-            public_send("#{name}=", value)
+            public_send(:"#{name}=", value)
             changed? ? save(validate: false) : true
         end
         
@@ -153,6 +153,7 @@ module CouchbaseOrm
             assign_attributes(hash) # Assign attributes is provided by ActiveModel::AttributeAssignment
             save!
         end
+        alias_method :update_attributes!, :update!
 
         # Reloads the record from the database.
         #

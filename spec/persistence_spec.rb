@@ -178,4 +178,44 @@ describe CouchbaseOrm::Persistence do
 
         model.destroy
     end
+
+    it "should reload a model" do
+        model = BasicModel.new
+
+        model.name = 'bob'
+        model.address = 'somewhere'
+        model.age = 34
+
+        expect(model.save).to be(true)
+        id = model.id
+        model.name = nil
+        expect(model.changed?).to be(true)
+
+        model.reload
+        expect(model.changed?).to be(false)
+        expect(model.id).to be(id)
+
+        model.destroy
+        expect(model.destroyed?).to be(true)
+    end
+
+    it "should update attributes" do
+        model = BasicModel.new
+
+        model.update_attributes({
+            name: 'bob',
+            age: 34
+        })
+
+        expect(model.new_record?).to be(false)
+        expect(model.destroyed?).to be(false)
+        expect(model.persisted?).to be(true)
+
+        expect(model.name).to eq('bob')
+        expect(model.age).to be(34)
+        expect(model.address).to be(nil)
+
+        model.destroy
+        expect(model.destroyed?).to be(true)
+    end
 end
