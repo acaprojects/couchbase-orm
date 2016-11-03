@@ -20,6 +20,7 @@ Gem::Specification.new do |gem|
     gem.add_development_dependency 'rake',         '~> 11.2'
     gem.add_development_dependency 'rspec',        '~> 3.5'
     gem.add_development_dependency 'yard',         '~> 0.9'
+    gem.add_development_dependency 'minitest',     '~> 5.9'
 
     gem.files         = `git ls-files`.split("\n")
     gem.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

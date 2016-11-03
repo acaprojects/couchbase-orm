@@ -1,6 +1,6 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-require 'couchbase-orm'
+require File.expand_path("../support", __FILE__)
 
 
 class BasicModel < CouchbaseOrm::Base
@@ -217,5 +217,21 @@ describe CouchbaseOrm::Persistence do
 
         model.destroy
         expect(model.destroyed?).to be(true)
+    end
+
+    describe BasicModel do
+        it_behaves_like "ActiveModel"
+    end
+
+    describe ModelWithDefaults do
+        it_behaves_like "ActiveModel"
+    end
+
+    describe ModelWithCallbacks do
+        it_behaves_like "ActiveModel"
+    end
+
+    describe ModelWithValidations do
+        it_behaves_like "ActiveModel"
     end
 end
