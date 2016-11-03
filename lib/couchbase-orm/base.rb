@@ -25,6 +25,7 @@ module CouchbaseOrm
 
         include Persistence
         include Associations
+
         extend Join
         extend Enum
         extend EnsureUnique
@@ -35,76 +36,84 @@ module CouchbaseOrm
         Metadata = Struct.new(:key, :cas)
 
 
-        def self.connect(**options)
-            @bucket = ::Libcouchbase::Bucket.new(**options)
-        end
+        class << self
+            def connect(**options)
+                @bucket = ::Libcouchbase::Bucket.new(**options)
+            end
 
-        def self.bucket=(bucket)
-            @bucket = bucket
-        end
+            def bucket=(bucket)
+                @bucket = bucket
+            end
 
-        def self.bucket
-            @bucket ||= Connection.bucket
-        end
+            def bucket
+                @bucket ||= Connection.bucket
+            end
 
-        at_exit do
-            # This will disconnect the database connection
-            @bucket = nil
-        end
+            at_exit do
+                # This will disconnect the database connection
+                @bucket = nil
+            end
 
-        def self.uuid_generator
-            @uuid_generator ||= IdGenerator
-        end
+            def uuid_generator
+                @uuid_generator ||= IdGenerator
+            end
 
-        def self.uuid_generator=(generator)
-            @uuid_generator = generator
-        end
+            def uuid_generator=(generator)
+                @uuid_generator = generator
+            end
 
-        def self.attribute(*names, **options)
-            @attributes ||= {}
-            names.each do |name|
-                name = name.to_sym
+            def attribute(*names, **options)
+                @attributes ||= {}
+                names.each do |name|
+                    name = name.to_sym
 
-                @attributes[name] = options
-                next if self.instance_methods.include?(name)
+                    @attributes[name] = options
+                    next if self.instance_methods.include?(name)
 
-                define_method(name) do
-                    read_attribute(name)
-                end
+                    define_method(name) do
+                        read_attribute(name)
+                    end
 
-                define_method(:"#{name}=") do |value|
-                    value = yield(value) if block_given?
-                    write_attribute(name, value)
+                    define_method(:"#{name}=") do |value|
+                        value = yield(value) if block_given?
+                        write_attribute(name, value)
+                    end
                 end
             end
-        end
 
-        def self.attributes
-            @attributes ||= {}
-        end
+            def attributes
+                @attributes ||= {}
+            end
 
-        def self.find(*ids, **options)
-            options[:extended] = true
-            options[:quiet] ||= false
+            def find(*ids, **options)
+                options[:extended] = true
+                options[:quiet] ||= false
 
-            ids = ids.flatten
-            records = bucket.get(*ids, **options)
+                ids = ids.flatten
+                records = bucket.get(*ids, **options)
 
-            records = records.is_a?(Array) ? records : [records]
-            records.map! { |record|
-                if record
-                    self.new(record)
-                else
-                    false
-                end
-            }
-            records.select! { |rec| rec }
-            ids.length > 1 ? records : records[0]
-        end
+                records = records.is_a?(Array) ? records : [records]
+                records.map! { |record|
+                    if record
+                        self.new(record)
+                    else
+                        false
+                    end
+                }
+                records.select! { |rec| rec }
+                ids.length > 1 ? records : records[0]
+            end
 
-        def self.find_by_id(*ids, **options)
-            options[:quiet] = true
-            find *ids, **options
+            def find_by_id(*ids, **options)
+                options[:quiet] = true
+                find *ids, **options
+            end
+            alias_method :[], :find_by_id
+
+            def exists?(id)
+                !bucket.get(id, quiet: true).nil?
+            end
+            alias_method :has_key?, :exists?
         end
 
 
@@ -212,11 +221,10 @@ module CouchbaseOrm
             self
         end
 
-        # Public: Hashes our unique key instead of the entire object.
+        # Public: Hashes identifying properties of the instance
+        #
         # Ruby normally hashes an object to be used in comparisons.  In our case
-        # we may have two techincally different objects referencing the same entity id,
-        # so we will hash just the class and id (via to_key) to compare so we get the
-        # expected result
+        # we may have two techincally different objects referencing the same entity id.
         #
         # Returns a string representing the unique key.
         def hash
@@ -236,13 +244,7 @@ module CouchbaseOrm
         #
         # other - Another object to compare to
         #
-        # Example
-        #
-        #     movie = Movie.find(1234)
-        #     movie.to_key
-        #     # => 'movie-1234'
-        #
-        # Returns a string representing the unique key.
+        # Returns a boolean.
         def ==(other)
             hash == other.hash
         end
