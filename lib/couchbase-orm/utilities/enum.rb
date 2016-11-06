@@ -6,7 +6,7 @@ module CouchbaseOrm
             # options contains an optional default value, and the name of the
             # enum, e.g enum visibility: %i(group org public), default: :group
             default = options.delete(:default)
-            name = options.keys.first
+            name = options.keys.first.to_sym
             values = options[name]
 
             # values is assumed to be a list of symbols. each value is assigned an
@@ -41,7 +41,7 @@ module CouchbaseOrm
                         Integer(value)
                     end
                 end
-                
+
                 record[name] = (1..values.length).cover?(value) ? value : default_value
             end
         end

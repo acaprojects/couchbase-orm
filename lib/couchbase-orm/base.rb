@@ -4,6 +4,7 @@
 require 'active_model'
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase-orm/error'
+require 'couchbase-orm/views'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/utilities/join'
@@ -25,6 +26,7 @@ module CouchbaseOrm
 
         include Persistence
         include Associations
+        include Views
 
         extend Join
         extend Enum

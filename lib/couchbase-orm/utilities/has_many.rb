@@ -128,6 +128,11 @@ module CouchbaseOrm
                 find(other_id).try(:delete)
             end
 
+            def destroy!(other_id)
+                raise 'Cannot call delete! on a non-join model' unless @find_method
+                find(other_id).try(:destroy)
+            end
+
             def exists?(other_id)
                 raise 'Cannot call exists? on a non-join model' unless @find_method
                 return false unless other_id.present?
