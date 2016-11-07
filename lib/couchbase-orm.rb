@@ -8,3 +8,9 @@ module CouchbaseOrm
     autoload :IdGenerator, 'couchbase-orm/id_generator'
     autoload :Base,        'couchbase-orm/base'
 end
+
+# If we are using Rails then we will include the Couchbase railtie.
+if defined?(Rails)
+    require 'couchbase-orm/railtie'
+end
+
