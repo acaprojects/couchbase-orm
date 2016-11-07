@@ -19,7 +19,7 @@
 
 require 'rails/generators/couchbase_generator'
 
-module Couchbase
+module CouchbaseOrm
     module Generators
         class ConfigGenerator < Rails::Generators::Base
             desc 'Creates a Couchbase configuration file at config/couchbase.yml'
