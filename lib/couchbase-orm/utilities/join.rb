@@ -23,8 +23,7 @@ module CouchbaseOrm
             add_joint_lookups(model_b, model_a, true)
 
             # use Index to allow lookups of joint records more efficiently than
-            # with a view or elastic search
-            extend Index
+            # with a view or search
             index ["#{model_a}_id".to_sym, "#{model_b}_id".to_sym], :join
         end
 
@@ -38,12 +37,12 @@ module CouchbaseOrm
             # find_by_group_id
             instance_eval "
                 def self.find_by_#{model}_id(#{model}_id)
-                    by_#{model}_id(key: #{model}_id, stale: false)
+                    by_#{model}_id(key: #{model}_id)
                 end
             "
         end
 
-        def add_joint_lookups(model_a, model_b, reverse=false)
+        def add_joint_lookups(model_a, model_b, reverse = false)
             # find_by_user_id_and_group_id
             instance_eval "
                 def self.find_by_#{model_a}_id_and_#{model_b}_id(#{model_a}_id, #{model_b}_id)

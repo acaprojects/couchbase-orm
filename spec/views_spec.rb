@@ -9,12 +9,20 @@ class ViewTest < CouchbaseOrm::Base
 
     view :all
     view :by_rating, emit_key: :rating
+
+    # This generates both:
+    # view :by_rating, emit_key: :rating    # same as above
+    # def self.find_by_rating(rating); end  # also provide this helper function
+    index_view :rating
 end
 
 
 describe CouchbaseOrm::Views do
     it "should save a new design document" do
-        ViewTest.bucket.delete_design_doc(ViewTest.design_document)
+        begin
+            ViewTest.bucket.delete_design_doc(ViewTest.design_document)
+        rescue Libcouchbase::Error::HttpResponseError
+        end
         expect(ViewTest.ensure_design_document!).to be(true)
     end
 
@@ -44,5 +52,22 @@ describe CouchbaseOrm::Views do
             ob.name
         }
         expect(docs).to eq(['greg', 'bob', 'jane'])
+    end
+
+    it "should return matching results" do
+        ViewTest.ensure_design_document!
+        ViewTest.create! name: :bob,  rating: :awesome
+        ViewTest.create! name: :jane, rating: :awesome
+        ViewTest.create! name: :greg, rating: :bad
+        ViewTest.create! name: :mel,  rating: :good
+
+        docs = ViewTest.find_by_rating(1).collect { |ob|
+            ob.name
+        }
+        ViewTest.all.stream { |ob|
+            ob.destroy
+        }
+
+        expect(docs).to eq(['bob', 'jane'])
     end
 end

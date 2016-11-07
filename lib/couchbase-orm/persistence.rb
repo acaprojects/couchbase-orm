@@ -45,7 +45,7 @@ module CouchbaseOrm
             def inherited(child)
                 super
                 child.instance_eval do
-                    @design_document = child.name
+                    @design_document = child.name.underscore
                 end
             end
         end

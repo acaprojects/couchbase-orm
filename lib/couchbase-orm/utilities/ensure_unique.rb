@@ -3,8 +3,6 @@ module CouchbaseOrm
         private
 
         def ensure_unique(attrs, name = nil, &processor)
-            extend Index
-
             # index uses a special bucket key to allow record lookups based on
             # the values of attrs. ensure_unique adds a simple lookup using
             # one of the added methods to identify duplicate

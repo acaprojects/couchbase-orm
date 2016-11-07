@@ -31,7 +31,6 @@ module CouchbaseOrm
                 method_opts[:map]    = map    if map
                 method_opts[:reduce] = reduce if reduce
 
-                yield method_opts if block_given?
                 unless method_opts.has_key? :map
                     emit_key = emit_key || :id
                     method_opts[:map] = "function(doc) {\n\tif (doc.type === \"#{@design_document}\") {\n\t\temit(doc.#{emit_key}, null);\n\t}\n}"
@@ -42,17 +41,19 @@ module CouchbaseOrm
                 name = name.to_sym
                 @views[name] = method_opts
 
-                singleton_class.send(:define_method, name) do |**opts|
+                singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts)
-                    include_docs = opts[:include_docs]
 
-                    bucket.view(@design_document, name, **opts) { |row|
-                        if include_docs
+                    if result_modifier
+                        opts[:include_docs] = true
+                        bucket.view(@design_document, name, **opts, &result_modifier)
+                    elsif opts[:include_docs]
+                        bucket.view(@design_document, name, **opts) { |row|
                             self.new(row)
-                        else
-                            row
-                        end
-                    }
+                        }
+                    else
+                        bucket.view(@design_document, name, **opts)
+                    end
                 end
             end
             ViewDefaults = {include_docs: true}

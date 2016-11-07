@@ -3,15 +3,14 @@ module CouchbaseOrm
         private
 
         # add a view and lookup method to the model for finding all records
-        # using a value in the supplied attr. the map reduce js files need
-        # to be created manually.
+        # using a value in the supplied attr.
         def index_view(attr, validate = true)
             validates(attr, presence: true) if validate
-            view "by_#{attr}"
+            view "by_#{attr}", emit_key: attr
 
             instance_eval "
                 def self.find_by_#{attr}(#{attr})
-                    by_#{attr}(key: #{attr}, stale: false)
+                    by_#{attr}(key: #{attr})
                 end
             "
         end

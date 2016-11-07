@@ -138,17 +138,9 @@ module CouchbaseOrm
                 return false unless other_id.present?
                 !find(other_id).nil?
             end
-        end
 
-
-        def has_many(model, options = {})
-            relset_varname = "@#{model}_rel_set"
-
-            define_method(model) do
-                relset = self.instance_variable_get(relset_varname)
-                return relset if relset
-                self.instance_variable_set(relset_varname, RelationSet.new(self, model, options))
-            end
+            @associations ||= []
+            @associations << [model, options[:dependent]]
         end
     end
 end

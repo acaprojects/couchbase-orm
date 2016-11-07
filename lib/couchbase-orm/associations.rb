@@ -18,7 +18,7 @@ module CouchbaseOrm
                 instance_var = :"@__assoc_#{name}"
 
                 # Class reference
-                assoc = (options[:class_name] || name.to_s.camelize).constantize
+                assoc = (options[:class_name] || name.to_s.camelize).to_s
 
                 # Create the local setter / getter
                 attribute(ref) { |value|
@@ -29,7 +29,7 @@ module CouchbaseOrm
                 # Define reader
                 define_method(name) do
                     return instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
-                    val = assoc.find(self.send(ref), quiet: true)
+                    val = assoc.constantize.find(self.send(ref), quiet: true)
                     instance_variable_set(instance_var, val)
                     val
                 end
@@ -58,11 +58,15 @@ module CouchbaseOrm
             assoc.each do |name, dependent|
                 next unless dependent
 
-                model = self.send(name)
-                if model
+                model = self.__send__(name)
+                if model.present?
                     case dependent
                     when :destroy, :delete
-                        model.send(dependent)
+                        if model.respond_to?(:stream)
+                            model.stream { |mod| mod.__send__(dependent) }
+                        else
+                            model.__send__(dependent)
+                        end
                     when :restrict_with_exception
                         raise RecordExists.new("#{self.class.name} instance maintains a restricted reference to #{name}", self)
                     when :restrict_with_error
