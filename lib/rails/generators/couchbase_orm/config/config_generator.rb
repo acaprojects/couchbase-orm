@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-require 'rails/generators/couchbase_generator'
+require 'rails/generators/couchbase_orm_generator'
 
 module CouchbaseOrm
     module Generators

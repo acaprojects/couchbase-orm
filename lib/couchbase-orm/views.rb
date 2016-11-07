@@ -33,7 +33,7 @@ module CouchbaseOrm
 
                 unless method_opts.has_key? :map
                     emit_key = emit_key || :id
-                    method_opts[:map] = "function(doc) {\n\tif (doc.type === \"#{@design_document}\") {\n\t\temit(doc.#{emit_key}, null);\n\t}\n}"
+                    method_opts[:map] = "function(doc) {\n\tif (doc.type === \"{{design_document}}\") {\n\t\temit(doc.#{emit_key}, null);\n\t}\n}"
                 end
 
                 @views ||= {}
@@ -67,8 +67,19 @@ module CouchbaseOrm
                 ddoc = bucket.design_docs[@design_document]
                 existing = ddoc.view_config if ddoc
 
+                return false unless @views.present?
+
+                views_actual = {}
+                # Fill in the design documents
+                @views.each do |name, document|
+                    doc = document.dup
+                    views_actual[name] = doc
+                    doc[:map] = doc[:map].gsub('{{design_document}}', @design_document) if doc[:map]
+                    doc[:reduce] = doc[:reduce].gsub('{{design_document}}', @design_document) if doc[:reduce]
+                end
+
                 # Check there are no changes we need to apply
-                (@views || {}).each do |name, desired|
+                views_actual.each do |name, desired|
                     check = existing[name]
                     if check
                         cmap = (check[:map] || '').gsub(/\s+/, '')
@@ -89,7 +100,7 @@ module CouchbaseOrm
                 # Updated the design document
                 if update_required
                     bucket.save_design_doc({
-                        views: @views
+                        views: views_actual
                     }, @design_document)
 
                     puts "Couchbase views updated for #{self.name}, design doc: #{@design_document}"
