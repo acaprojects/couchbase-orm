@@ -35,9 +35,9 @@ It will generate this `config/couchbase.yml` for you:
     require 'couchbase-orm'
 
     class Post < CouchbaseOrm::Base
-      attribute :title
-      attribute :body
-      attribute :draft
+      attribute :title, type: String
+      attribute :body,  type: String
+      attribute :draft, type: Boolean
     end
 
     p = Post.new(id: 'hello-world',
@@ -64,9 +64,9 @@ You can define connection options on per model basis:
 
 ```ruby
     class Post < CouchbaseOrm::Base
-      attribute :title
-      attribute :body
-      attribute :draft
+      attribute :title, type: String
+      attribute :body,  type: String
+      attribute :draft, type: Boolean
 
       connect bucket: 'blog', password: ENV['BLOG_BUCKET_PASSWORD']
     end
