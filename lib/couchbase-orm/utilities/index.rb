@@ -16,7 +16,7 @@ module CouchbaseOrm
         end
 
         def index(attrs, name = nil, &processor)
-            attrs = [attrs].flatten
+            attrs = Array(attrs).flatten
             name ||= attrs.map(&:to_s).join('_')
 
             find_by_method          = "find_by_#{name}"
