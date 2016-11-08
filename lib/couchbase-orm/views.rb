@@ -58,6 +58,22 @@ module CouchbaseOrm
             end
             ViewDefaults = {include_docs: true}
 
+            # add a view and lookup method to the model for finding all records
+            # using a value in the supplied attr.
+            def index_view(attr, validate: true, find_method: nil, view_method: nil)
+                view_method ||= "by_#{attr}"
+                find_method ||= "find_#{view_method}"
+
+                validates(attr, presence: true) if validate
+                view view_method, emit_key: attr
+
+                instance_eval "
+                    def self.#{find_method}(#{attr})
+                        #{view_method}(key: #{attr})
+                    end
+                "
+            end
+
             def ensure_design_document!
                 return false unless @views && !@views.empty?
                 existing = {}

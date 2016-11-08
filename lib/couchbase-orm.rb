@@ -34,6 +34,7 @@ module Conversions
         raise ArgumentError, "invalid value for Boolean(): \"#{value.inspect}\""
     end
 end
+class Boolean < TrueClass; end
 
 # If we are using Rails then we will include the Couchbase railtie.
 if defined?(Rails)
