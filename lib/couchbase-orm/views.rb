@@ -33,7 +33,27 @@ module CouchbaseOrm
 
                 unless method_opts.has_key? :map
                     emit_key = emit_key || :id
-                    method_opts[:map] = "function(doc) {\n\tif (doc.type === \"{{design_document}}\") {\n\t\temit(doc.#{emit_key}, null);\n\t}\n}"
+
+                    if emit_key != :id && self.attributes[emit_key][:type].to_s == 'Array'
+                        method_opts[:map] = <<-EMAP
+function(doc) {
+    var i;
+    if (doc.type === "{{design_document}}") {
+        for (i = 0; i < doc.#{emit_key}.length; i += 1) {
+            emit(doc.#{emit_key}[i], null);
+        }
+    }
+}
+EMAP
+                    else
+                        method_opts[:map] = <<-EMAP
+function(doc) {
+    if (doc.type === "{{design_document}}") {
+        emit(doc.#{emit_key}, null);
+    }
+}
+EMAP
+                    end
                 end
 
                 @views ||= {}

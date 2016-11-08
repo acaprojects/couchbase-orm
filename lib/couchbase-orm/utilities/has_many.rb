@@ -37,12 +37,12 @@ module CouchbaseOrm
             if remote_class
                 klass.class_eval do
                     view remote_method, map: <<-EMAP
-                        function(doc) {
-                            if (doc.type === "{{design_document}}" && doc.#{through_key}) {
-                                emit(doc.#{foreign_key}, null);
-                            }
-                        }
-                    EMAP
+    function(doc) {
+        if (doc.type === "{{design_document}}" && doc.#{through_key}) {
+            emit(doc.#{foreign_key}, null);
+        }
+    }
+EMAP
                 end
 
                 define_method(model) do
