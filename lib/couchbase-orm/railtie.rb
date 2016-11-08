@@ -52,7 +52,7 @@ module Rails #:nodoc:
                 config_file = Rails.root.join('config', 'couchbase.yml')
                 if config_file.file? &&
                     config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]
-                    ::CouchbaseOrm.Connection.options = config.deep_symbolize_keys
+                    ::CouchbaseOrm::Connection.options = config.deep_symbolize_keys
                 end
             end
 
@@ -69,19 +69,6 @@ module Rails #:nodoc:
                 end
             end
 
-            # Check (and upgrade if needed) all design documents
-            initializer 'couchbase.upgrade_design_documents', :after => 'couchbase.setup_connection'  do |app|
-                if config.couchbase.ensure_design_documents
-                    begin
-                        ::CouchbaseOrm::Base.descendants.each do |model|
-                            model.ensure_design_document!
-                        end
-                    rescue ::Libcouchbase::Error::Timedout, ::Libcouchbase::Error::ConnectError, ::Libcouchbase::Error::NetworkError
-                        # skip connection errors for now
-                    end
-                end
-            end
-
             # Set the proper error types for Rails. NotFound errors should be
             # 404s and not 500s, validation errors are 422s.
             initializer 'couchbase.load_http_errors' do |app|
@@ -92,6 +79,18 @@ module Rails #:nodoc:
                 end
             end
 
+            # Check (and upgrade if needed) all design documents
+            config.after_initialize do |app|
+                if config.couchbase.ensure_design_documents
+                    begin
+                        ::CouchbaseOrm::Base.descendants.each do |model|
+                            model.ensure_design_document!
+                        end
+                    rescue ::Libcouchbase::Error::Timedout, ::Libcouchbase::Error::ConnectError, ::Libcouchbase::Error::NetworkError
+                        # skip connection errors for now
+                    end
+                end
+            end
         end
     end
 end

@@ -1,6 +1,5 @@
 common: &common
-  hostname: localhost
-  port: 8091
+  hosts: localhost
   password:
 
 development:
@@ -10,10 +9,10 @@ development:
 test:
   <<: *common
   bucket: <%= database_name || app_name %>_test
+  password: for_test_bucket
 
 # set these environment variables on your production server
 production:
-  hostname: <%%= ENV['COUCHBASE_HOST'] %>
-  port: <%%= ENV['COUCHBASE_PORT'] || 8091 %>
+  hosts: <%%= ENV['COUCHBASE_HOST'] || ENV['COUCHBASE_HOSTS'] %>
   bucket: <%%= ENV['COUCHBASE_BUCKET'] %>
   password: <%%= ENV['COUCHBASE_PASSWORD'] %>

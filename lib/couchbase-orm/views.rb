@@ -59,15 +59,13 @@ module CouchbaseOrm
             ViewDefaults = {include_docs: true}
 
             def ensure_design_document!
-                return unless @views && !@views.empty?
+                return false unless @views && !@views.empty?
                 existing = {}
                 update_required = false
 
                 # Grab the existing view details
                 ddoc = bucket.design_docs[@design_document]
                 existing = ddoc.view_config if ddoc
-
-                return false unless @views.present?
 
                 views_actual = {}
                 # Fill in the design documents
