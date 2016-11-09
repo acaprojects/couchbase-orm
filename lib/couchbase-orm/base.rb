@@ -128,9 +128,9 @@ module CouchbaseOrm
             self.class.attributes.each do |key, options|
                 default = options[:default]
                 if default.respond_to?(:call)
-                    @__attributes__[key] = default.call
+                    write_attribute key, default.call
                 else
-                    @__attributes__[key] = default
+                    write_attribute key, default
                 end
             end
 
