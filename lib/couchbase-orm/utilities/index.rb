@@ -2,7 +2,7 @@ module CouchbaseOrm
     module Index
         private
 
-        def index(attrs, name = nil, &processor)
+        def index(attrs, name = nil, presence: true, &processor)
             attrs = Array(attrs).flatten
             name ||= attrs.map(&:to_s).join('_')
 
@@ -67,9 +67,11 @@ module CouchbaseOrm
             # validations
             #----------------
             # ensure each component of the unique key is present
-            attrs.each do |attr|
-                validates attr, presence: true
-                define_attribute_methods attr
+            if presence
+                attrs.each do |attr|
+                    validates attr, presence: true
+                    define_attribute_methods attr
+                end
             end
 
             define_method("#{name}_unique?") do
@@ -97,7 +99,10 @@ module CouchbaseOrm
             after_save do |record|
                 original_key = instance_variable_get(original_bucket_key_var)
                 record.class.bucket.delete(original_key, quiet: true) if original_key
-                record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
+
+                unless presence == false && attrs.length == 1 && record[attrs[0]].nil?
+                    record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
+                end
                 instance_variable_set(original_bucket_key_var, nil)
             end
 

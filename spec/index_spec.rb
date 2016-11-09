@@ -4,8 +4,9 @@ require File.expand_path("../support", __FILE__)
 
 
 class IndexTest < CouchbaseOrm::Base
-    attribute :email
-    ensure_unique :email
+    attribute :email, type: String
+    attribute :name,  type: String, default: :joe
+    ensure_unique :email, presence: false
 end
 
 class EnumTest < CouchbaseOrm::Base
@@ -14,6 +15,11 @@ end
 
 
 describe CouchbaseOrm::Index do
+    after :each do
+        IndexTest.bucket.delete('index_testemail-joe@aca.com')
+        IndexTest.bucket.delete('index_testemail-')
+    end
+
     it "should prevent models being created if they should have unique keys" do
         joe = IndexTest.create!(email: 'joe@aca.com')
         expect { IndexTest.create!(email: 'joe@aca.com') }.to raise_error(CouchbaseOrm::Error::RecordInvalid)
@@ -52,6 +58,22 @@ describe CouchbaseOrm::Index do
         expect(again.save).to be(true)
 
         again.destroy
+    end
+
+    it "should work with nil values" do
+        joe = IndexTest.create!
+        expect(IndexTest.find_by_email(nil)).to eq(nil)
+
+        joe.email = 'joe@aca.com'
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+
+        joe.email = nil
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(nil)
+        expect(IndexTest.find_by_email(nil)).to eq(nil)
+
+        joe.destroy
     end
 
     it "should work with enumerators" do
