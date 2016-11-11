@@ -32,9 +32,9 @@ module CouchbaseOrm
                 method_opts[:reduce] = reduce if reduce
 
                 unless method_opts.has_key? :map
-                    emit_key = emit_key || :id
+                    emit_key = emit_key || :created_at
 
-                    if emit_key != :id && self.attributes[emit_key][:type].to_s == 'Array'
+                    if emit_key != :created_at && self.attributes[emit_key][:type].to_s == 'Array'
                         method_opts[:map] = <<-EMAP
 function(doc) {
     var i;
