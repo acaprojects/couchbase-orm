@@ -7,6 +7,10 @@ class Parent < CouchbaseOrm::Base
     attribute :name
 end
 
+class RandomOtherType < CouchbaseOrm::Base
+    attribute :name
+end
+
 class Child < CouchbaseOrm::Base
     attribute :name
 
@@ -68,6 +72,15 @@ describe CouchbaseOrm::Associations do
         id = parent.id
         parent.delete
         expect(Parent.exists?(id)).to be(false)
+    end
+
+    it "should raise an error if an invalid type is being assigned" do
+        begin
+            parent = RandomOtherType.create!(name: 'joe')
+            expect { Child.create!(name: 'bob', parent: parent) }.to raise_error(ArgumentError)
+        ensure
+            parent.delete
+        end
     end
 
     describe Parent do

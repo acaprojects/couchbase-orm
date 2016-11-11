@@ -29,7 +29,11 @@ module CouchbaseOrm
                 # Define reader
                 define_method(name) do
                     return instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
-                    val = assoc.constantize.find(self.send(ref), quiet: true)
+                    val = if options[:polymorphic]
+                        ::CouchbaseOrm.try_load(self.send(ref))
+                    else
+                        assoc.constantize.find(self.send(ref), quiet: true)
+                    end
                     instance_variable_set(instance_var, val)
                     val
                 end
@@ -38,6 +42,10 @@ module CouchbaseOrm
                 attr_writer name
                 define_method(:"#{name}=") do |value|
                     if value
+                        if !options[:polymorphic]
+                            klass = assoc.constantize
+                            raise ArgumentError, "type mismatch on association: #{klass.design_document} != #{value.class.design_document}" if klass.design_document != value.class.design_document
+                        end
                         self.send(ref_ass, value.id)
                     else
                         self.send(ref_ass, nil)

@@ -62,6 +62,16 @@ describe CouchbaseOrm::Base do
         base.destroy
     end
 
+    it "should try to load a model with nothing but an ID" do
+        begin
+            base = BaseTest.create!(name: 'joe')
+            obj = CouchbaseOrm.try_load(base.id)
+            expect(obj).to eq(base)
+        ensure
+            base.destroy
+        end
+    end
+
     describe BaseTest do
         it_behaves_like "ActiveModel"
     end

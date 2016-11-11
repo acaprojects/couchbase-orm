@@ -7,6 +7,19 @@ module CouchbaseOrm
     autoload :Connection,  'couchbase-orm/connection'
     autoload :IdGenerator, 'couchbase-orm/id_generator'
     autoload :Base,        'couchbase-orm/base'
+
+    def self.try_load(id)
+        result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
+        if result && result.value.is_a?(Hash) && result.value[:type]
+            ddoc = result.value[:type]
+            ::CouchbaseOrm::Base.descendants.each do |model|
+                if model.design_document == ddoc
+                    return model.new(result)
+                end
+            end
+        end
+        nil
+    end
 end
 
 # Provide Boolean conversion function
