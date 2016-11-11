@@ -21,6 +21,7 @@ module CouchbaseOrm
         include ::ActiveModel::Serializers::JSON
 
         extend  ::ActiveModel::Callbacks
+        include ::ActiveModel::Validations::Callbacks
         define_model_callbacks :initialize, :only => :after
         define_model_callbacks :create, :destroy, :save, :update
 
