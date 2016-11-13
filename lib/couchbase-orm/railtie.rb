@@ -36,7 +36,9 @@ module Rails #:nodoc:
             def self.rescue_responses
                 {
                     'Libcouchbase::Error::KeyNotFound' => :not_found,
-                    'Libcouchbase::Error::NotStored' => :unprocessable_entity
+                    'Libcouchbase::Error::NotStored' => :unprocessable_entity,
+                    Libcouchbase::Error::KeyNotFound => :not_found,
+                    Libcouchbase::Error::NotStored => :unprocessable_entity
                 }
             end
 
