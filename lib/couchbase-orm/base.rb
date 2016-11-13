@@ -150,11 +150,11 @@ module CouchbaseOrm
                     @__metadata__.cas = model.cas
 
                     # This ensures that defaults are applied
-                    super(**doc)
+                    @__attributes__.merge! doc
                 when CouchbaseOrm::Base
                     attributes = model.attributes
                     attributes.delete(:id)
-                    super(**attributes)
+                    @__attributes__ = attributes
                 else
                     super(**attributes.merge(Hash(model)))
                 end
@@ -210,6 +210,12 @@ module CouchbaseOrm
                 setter = :"#{key}="
                 send(setter, value) if respond_to?(setter)
             end
+        end
+
+        ID_LOOKUP = ['id', :id].freeze
+        def read_attribute_for_serialization(attr)
+            return self.id if ID_LOOKUP.include?(attr)
+            @__attributes__[attr]
         end
 
 
