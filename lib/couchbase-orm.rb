@@ -24,7 +24,7 @@ end
 
 # Provide Boolean conversion function
 # See: http://www.virtuouscode.com/2012/05/07/a-ruby-conversion-idiom/
-module Conversions
+module Kernel
     private
 
     def Boolean(value)

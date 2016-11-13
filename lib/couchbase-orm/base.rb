@@ -92,7 +92,12 @@ module CouchbaseOrm
                 options[:extended] = true
                 options[:quiet] ||= false
 
-                ids = ids.flatten
+                ids = ids.flatten.select { |id| id.present? }
+                if ids.empty?
+                    return nil if options[:quiet]
+                    raise Libcouchbase::Error::EmptyKey, 'no id(s) provided'
+                end
+
                 records = bucket.get(*ids, **options)
 
                 records = records.is_a?(Array) ? records : [records]
@@ -109,7 +114,7 @@ module CouchbaseOrm
 
             def find_by_id(*ids, **options)
                 options[:quiet] = true
-                find *ids, **options
+                find(*ids, **options)
             end
             alias_method :[], :find_by_id
 
@@ -213,9 +218,14 @@ module CouchbaseOrm
         end
 
         ID_LOOKUP = ['id', :id].freeze
-        def read_attribute_for_serialization(attr)
-            return self.id if ID_LOOKUP.include?(attr)
-            @__attributes__[attr]
+        def attribute(name)
+            return self.id if ID_LOOKUP.include?(name)
+            @__attributes__[name]
+        end
+        alias_method :read_attribute_for_serialization, :attribute
+        
+        def attribute=(name, value)
+            __send__(:"#{name}=", value)
         end
 
 
