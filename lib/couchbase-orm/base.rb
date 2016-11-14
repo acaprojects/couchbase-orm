@@ -71,15 +71,19 @@ module CouchbaseOrm
                     name = name.to_sym
 
                     @attributes[name] = options
-                    next if self.instance_methods.include?(name)
 
-                    define_method(name) do
-                        read_attribute(name)
+                    unless self.instance_methods.include?(name)
+                        define_method(name) do
+                            read_attribute(name)
+                        end
                     end
 
-                    define_method(:"#{name}=") do |value|
-                        value = yield(value) if block_given?
-                        write_attribute(name, value)
+                    eq_meth = :"#{name}="
+                    unless self.instance_methods.include?(eq_meth)
+                        define_method(eq_meth) do |value|
+                            value = yield(value) if block_given?
+                            write_attribute(name, value)
+                        end
                     end
                 end
             end
