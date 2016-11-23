@@ -17,6 +17,7 @@ describe CouchbaseOrm::Base do
     it "should be comparable to other objects" do
         base  = BaseTest.create!(name: 'joe')
         base2 = BaseTest.create!(name: 'joe')
+        base3 = BaseTest.create!(ActiveSupport::HashWithIndifferentAccess.new(name: 'joe'))
 
         expect(base).to eq(base)
         expect(base).to be(base)
@@ -29,6 +30,7 @@ describe CouchbaseOrm::Base do
 
         base.delete
         base2.delete
+        base3.delete
     end
 
     it "should load database responses" do

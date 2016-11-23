@@ -165,10 +165,10 @@ module CouchbaseOrm
                     attributes.delete(:id)
                     @__attributes__ = attributes
                 else
-                    super(**attributes.merge(Hash(model)))
+                    super(attributes.merge(Hash(model)))
                 end
             else
-                super(**attributes)
+                super(attributes)
             end
 
             yield self if block_given?
