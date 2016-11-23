@@ -25,7 +25,7 @@ module Rails #:nodoc:
         class Railtie < Rails::Railtie #:nodoc:
 
             config.couchbase = ActiveSupport::OrderedOptions.new
-            config.couchbase.ensure_design_documents ||= true
+            config.couchbase.ensure_design_documents = true
 
             # Maping of rescued exceptions to HTTP responses
             #
