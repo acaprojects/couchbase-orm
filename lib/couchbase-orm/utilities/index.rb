@@ -50,13 +50,18 @@ module CouchbaseOrm
             # use the bucket key as an index - lookup records by attr values
             define_singleton_method(find_by_method) do |*values|
                 key = self.send(class_bucket_key_method, *values)
-                id  = self.bucket.get(key, quiet: true)
+                id  = nil
+                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                    id = self.bucket.get(key, quiet: true)
+                end
                 if id
                     mod = self.find_by_id(id)
                     return mod if mod
 
                     # Clean up record if the id doesn't exist
-                    self.bucket.delete(key, quiet: true)
+                    ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                        self.bucket.delete(key, quiet: true)
+                    end
                 end
 
                 nil
@@ -98,10 +103,14 @@ module CouchbaseOrm
             # new one. the id of the current record is used as the key's value.
             after_save do |record|
                 original_key = instance_variable_get(original_bucket_key_var)
-                record.class.bucket.delete(original_key, quiet: true) if original_key
+                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                    record.class.bucket.delete(original_key, quiet: true) if original_key
+                end
 
                 unless presence == false && attrs.length == 1 && record[attrs[0]].nil?
-                    record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
+                    ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                        record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
+                    end
                 end
                 instance_variable_set(original_bucket_key_var, nil)
             end
@@ -109,7 +118,9 @@ module CouchbaseOrm
             # cleanup by removing the bucket key before the record is deleted
             # TODO: handle unpersisted, modified component values
             before_destroy do |record|
-                record.class.bucket.delete(record.send(bucket_key_method), quiet: true)
+                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                    record.class.bucket.delete(record.send(bucket_key_method), quiet: true)
+                end
                 true
             end
 

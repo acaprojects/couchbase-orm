@@ -9,7 +9,11 @@ module CouchbaseOrm
     autoload :Base,        'couchbase-orm/base'
 
     def self.try_load(id)
-        result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
+        result = nil
+        ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+            result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
+        end
+        
         if result && result.value.is_a?(Hash) && result.value[:type]
             ddoc = result.value[:type]
             ::CouchbaseOrm::Base.descendants.each do |model|

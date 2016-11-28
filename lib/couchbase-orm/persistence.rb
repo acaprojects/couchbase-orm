@@ -99,7 +99,9 @@ module CouchbaseOrm
         # The record is simply removed, no callbacks are executed.
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
-            self.class.bucket.delete(@__metadata__.key, options)
+            ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                self.class.bucket.delete(@__metadata__.key, options)
+            end
 
             @__metadata__.key = nil
             @id = nil
@@ -121,7 +123,9 @@ module CouchbaseOrm
                 destroy_associations!
 
                 options[:cas] = @__metadata__.cas if with_cas
-                self.class.bucket.delete(@__metadata__.key, options)
+                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                    self.class.bucket.delete(@__metadata__.key, options)
+                end
 
                 @__metadata__.key = nil
                 @id = nil
@@ -165,7 +169,10 @@ module CouchbaseOrm
             key = @__metadata__.key
             raise "unable to reload, model not persisted" unless key
 
-            resp = self.class.bucket.get(key, quiet: false, extended: true)
+            resp = nil
+            ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                resp = self.class.bucket.get(key, quiet: false, extended: true)
+            end
             @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.value)
             @__metadata__.key = resp.key
             @__metadata__.cas = resp.cas
@@ -177,7 +184,10 @@ module CouchbaseOrm
 
         # Updates the TTL of the document
         def touch(**options)
-            res = self.class.bucket.touch(@__metadata__.key, async: false, **options)
+            res = nil
+            ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                res = self.class.bucket.touch(@__metadata__.key, async: false, **options)
+            end
             @__metadata__.cas = resp.cas
             self
         end
@@ -198,7 +208,11 @@ module CouchbaseOrm
 
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
-                    resp = self.class.bucket.replace(_id, @__attributes__, **options)
+
+                    resp = nil
+                    ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                        resp = self.class.bucket.replace(_id, @__attributes__, **options)
+                    end
 
                     # Ensure the model is up to date
                     @__metadata__.key = resp.key
@@ -220,7 +234,10 @@ module CouchbaseOrm
                     @__attributes__.delete(:id)
 
                     _id = @id || self.class.uuid_generator.next(self)
-                    resp = self.class.bucket.add(_id, @__attributes__, **options)
+                    resp = nil
+                    ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                        resp = self.class.bucket.add(_id, @__attributes__, **options)
+                    end
 
                     # Ensure the model is up to date
                     @__metadata__.key = resp.key
