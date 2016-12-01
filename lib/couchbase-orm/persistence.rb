@@ -162,6 +162,33 @@ module CouchbaseOrm
         end
         alias_method :update_attributes!, :update!
 
+        # Updates the record without validating or running callbacks
+        def update_columns(with_cas: false, **hash)
+            _id = @__metadata__.key
+            raise "unable to update columns, model not persisted" unless _id
+
+            assign_attributes(hash)
+
+            # Ensure the type is set
+            @__attributes__[:type] = self.class.design_document
+            @__attributes__.delete(:id)
+
+            options = {}
+            options[:cas] = @__metadata__.cas if with_cas
+
+            resp = nil
+            ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
+                resp = self.class.bucket.replace(_id, @__attributes__, **options)
+            end
+
+            # Ensure the model is up to date
+            @__metadata__.key = resp.key
+            @__metadata__.cas = resp.cas
+
+            clear_changes_information
+            self
+        end
+
         # Reloads the record from the database.
         #
         # This method finds record by its key and modifies the receiver in-place:

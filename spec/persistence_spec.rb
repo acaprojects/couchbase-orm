@@ -133,6 +133,41 @@ describe CouchbaseOrm::Persistence do
         expect(model.name).to eq('joe')
     end
 
+    it "should skip callbacks when updating columns" do
+        model = ModelWithCallbacks.new
+
+        # Test initialize
+        expect(model.name).to be(nil)
+        expect(model.age).to be(10)
+        expect(model.address).to be(nil)
+
+        expect(model.new_record?).to be(true)
+        expect(model.destroyed?).to be(false)
+        expect(model.persisted?).to be(false)
+
+        # Test create
+        result = model.save
+        expect(result).to be(true)
+
+        expect(model.name).to eq('bob')
+        expect(model.age).to be(10)
+        expect(model.address).to eq('23')
+
+        # Test Update
+        model.update_columns(address: 'other')
+        expect(model.address).to eq('other')
+        loaded = ModelWithCallbacks.find model.id
+        expect(loaded.address).to eq('other')
+
+        # Test delete skipping callbacks
+        model.delete
+        expect(model.new_record?).to be(false)
+        expect(model.destroyed?).to be(true)
+        expect(model.persisted?).to be(false)
+
+        expect(model.name).to eq('bob')
+    end
+
     it "should perform validations" do
         model = ModelWithValidations.new
 
