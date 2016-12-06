@@ -185,7 +185,7 @@ module CouchbaseOrm
             @__metadata__.key = resp.key
             @__metadata__.cas = resp.cas
 
-            clear_changes_information
+            changes_applied
             self
         end
 
@@ -245,7 +245,7 @@ module CouchbaseOrm
                     @__metadata__.key = resp.key
                     @__metadata__.cas = resp.cas
 
-                    clear_changes_information
+                    changes_applied
                     true
                 end
             end
@@ -270,7 +270,7 @@ module CouchbaseOrm
                     @__metadata__.key = resp.key
                     @__metadata__.cas = resp.cas
 
-                    clear_changes_information
+                    changes_applied
                     true
                 end
             end

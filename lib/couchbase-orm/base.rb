@@ -180,6 +180,7 @@ module CouchbaseOrm
 
             yield self if block_given?
 
+            clear_changes_information
             run_callbacks :initialize
         end
 
