@@ -64,6 +64,33 @@ describe CouchbaseOrm::Base do
         base.destroy
     end
 
+    it "should support dirty attributes" do
+        begin
+            base = BaseTest.new
+            expect(base.changes.empty?).to be(true)
+            expect(base.previous_changes.empty?).to be(true)
+
+            base.name = 'change'
+            expect(base.changes.empty?).to be(false)
+
+            base = BaseTest.new({name: 'bob'})
+            expect(base.changes.empty?).to be(false)
+            expect(base.previous_changes.empty?).to be(true)
+
+            # A saved model should have no changes
+            base = BaseTest.create!(name: 'joe')
+            expect(base.changes.empty?).to be(true)
+            expect(base.previous_changes.empty?).to be(false)
+
+            # Attributes are copied from the existing model
+            base = BaseTest.new(base)
+            expect(base.changes.empty?).to be(false)
+            expect(base.previous_changes.empty?).to be(true)
+        ensure
+            base.destroy if base.id
+        end
+    end
+
     it "should try to load a model with nothing but an ID" do
         begin
             base = BaseTest.create!(name: 'joe')

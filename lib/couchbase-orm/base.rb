@@ -167,20 +167,23 @@ module CouchbaseOrm
 
                     # This ensures that defaults are applied
                     @__attributes__.merge! doc
+                    clear_changes_information
                 when CouchbaseOrm::Base
+                    clear_changes_information
                     attributes = model.attributes
                     attributes.delete(:id)
-                    @__attributes__ = attributes
+                    super(attributes)
                 else
+                    clear_changes_information
                     super(attributes.merge(Hash(model)))
                 end
             else
+                clear_changes_information
                 super(attributes)
             end
 
             yield self if block_given?
 
-            clear_changes_information
             run_callbacks :initialize
         end
 
