@@ -57,7 +57,7 @@ EMAP
                 end
             else
                 klass.class_eval do
-                    index_view foreign_key
+                    index_view foreign_key, validate: false
                 end
 
                 define_method(model) do
