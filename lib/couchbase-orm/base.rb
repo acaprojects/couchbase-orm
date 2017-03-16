@@ -280,7 +280,12 @@ module CouchbaseOrm
         #
         # Returns a boolean.
         def ==(other)
-            hash == other.hash
+            case other
+            when self.class
+                hash == other.hash
+            else
+                false
+            end
         end
     end
 end
