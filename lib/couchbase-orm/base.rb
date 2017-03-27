@@ -52,11 +52,6 @@ module CouchbaseOrm
                 @bucket ||= Connection.bucket
             end
 
-            at_exit do
-                # This will disconnect the database connection
-                @bucket = nil
-            end
-
             def uuid_generator
                 @uuid_generator ||= IdGenerator
             end
@@ -102,7 +97,8 @@ module CouchbaseOrm
                     raise Libcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
-                records = Array(bucket.get(*ids, **options))
+                record = bucket.get(*ids, **options)
+                records = record.is_a?(Array) ? record : [record]
                 records.map! { |record|
                     if record
                         self.new(record)

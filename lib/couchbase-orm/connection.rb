@@ -12,11 +12,5 @@ module CouchbaseOrm
         def self.bucket
             @bucket ||= ::Libcouchbase::Bucket.new(**@options)
         end
-
-        # This will disconnect the database connection,
-        # allowing the application to exit
-        at_exit do
-            @bucket = nil
-        end
     end
 end
