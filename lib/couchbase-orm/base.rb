@@ -102,12 +102,7 @@ module CouchbaseOrm
                     raise Libcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
-                records = nil
-                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
-                    records = bucket.get(*ids, **options)
-                end
-
-                records = records.is_a?(Array) ? records : [records]
+                records = Array(bucket.get(*ids, **options))
                 records.map! { |record|
                     if record
                         self.new(record)
@@ -126,11 +121,7 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
-                val = false
-                ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
-                    val = bucket.get(id, quiet: true).nil?
-                end
-                !val
+                !bucket.get(id, quiet: true).nil?
             end
             alias_method :has_key?, :exists?
         end

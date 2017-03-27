@@ -10,10 +10,8 @@ module CouchbaseOrm
 
     def self.try_load(id)
         result = nil
-        ::ActiveSupport::Dependencies.interlock.permit_concurrent_loads do
-            result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
-        end
-        
+        result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
+
         if result && result.value.is_a?(Hash) && result.value[:type]
             ddoc = result.value[:type]
             ::CouchbaseOrm::Base.descendants.each do |model|
