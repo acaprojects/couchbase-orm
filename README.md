@@ -129,3 +129,22 @@ There are common active record helpers available for use `belongs_to` and `has_m
 ```
 
 
+## Performance Comparison with Couchbase-Ruby-Model
+
+Basically we migrated an application from [Couchbase Ruby Model](https://github.com/couchbase/couchbase-ruby-model)
+to [Couchbase-ORM](https://github.com/acaprojects/couchbase-orm) (this project)
+
+* Rails 5 production
+* Puma as the webserver
+* Running on a 2015 Macbook Pro
+* Performance test: `siege -c250 -r10  http://localhost:3000/auth/authority`
+
+The request above pulls the same database document each time and returns it. A simple O(1) operation.
+
+| Stat | Couchbase Ruby Model | Couchbase-ORM |
+| :--- | :---                 |   :---        |
+|Transactions|2500 hits|2500 hits|
+|Elapsed time|12.24 secs|8.20 secs|
+|Response time|0.88 secs|0.47 secs|
+|Transaction rate|204.25 trans/sec|304.88 trans/sec|
+|Request Code|[ruby-model-app](https://github.com/QuayPay/coauth/blob/95bbf5e5c3b3340e5af2da494b90c91c5e3d6eaa/app/controllers/auth/authorities_controller.rb#L6)|[couch-orm-app](https://github.com/QuayPay/coauth/blob/87f6fdeaab784ba252a5d38bbcf9e6b0477bb504/app/controllers/auth/authorities_controller.rb#L8)|
