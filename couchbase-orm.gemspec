@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
     gem.require_paths = ["lib"]
 
     gem.add_runtime_dependency     'libcouchbase', '~> 0.1'
-    gem.add_runtime_dependency     'activemodel',  '~> 5.0'
+    gem.add_runtime_dependency     'activemodel',  '~> 4.0'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
 
     gem.add_development_dependency 'rake',         '~> 11.2'
