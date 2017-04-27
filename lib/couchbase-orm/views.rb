@@ -23,7 +23,13 @@ module CouchbaseOrm
             #    # ...
             #  end
             def view(name, map: nil, emit_key: nil, reduce: nil, **options)
-                raise "unknown emit_key attribute for view :#{name}, emit_key: :#{emit_key}" if emit_key && @attributes[emit_key].nil?
+                if emit_key.class == Array
+                    emit_key.each do |key|
+                        raise "unknown emit_key attribute for view :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
+                    end
+                else
+                    raise "unknown emit_key attribute for view :#{name}, emit_key: :#{emit_key}" if emit_key && @attributes[emit_key].nil?
+                end
 
                 options = ViewDefaults.merge(options)
 
@@ -32,10 +38,19 @@ module CouchbaseOrm
                 method_opts[:reduce] = reduce if reduce
 
                 unless method_opts.has_key? :map
-                    emit_key = emit_key || :created_at
-
-                    if emit_key != :created_at && self.attributes[emit_key][:type].to_s == 'Array'
+                    if emit_key.class == Array
                         method_opts[:map] = <<-EMAP
+function(doc) {
+    if (doc.type === "{{design_document}}") {
+        emit([#{emit_key.map{|key| "doc."+key}.join(',')}], null);
+    }
+}
+EMAP
+                    else
+                        emit_key = emit_key || :created_at
+
+                        if emit_key != :created_at && self.attributes[emit_key][:type].to_s == 'Array'
+                            method_opts[:map] = <<-EMAP
 function(doc) {
     var i;
     if (doc.type === "{{design_document}}") {
@@ -45,14 +60,15 @@ function(doc) {
     }
 }
 EMAP
-                    else
-                        method_opts[:map] = <<-EMAP
+                        else
+                            method_opts[:map] = <<-EMAP
 function(doc) {
     if (doc.type === "{{design_document}}") {
         emit(doc.#{emit_key}, null);
     }
 }
 EMAP
+                        end
                     end
                 end
 
