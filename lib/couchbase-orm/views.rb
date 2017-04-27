@@ -42,7 +42,7 @@ module CouchbaseOrm
                         method_opts[:map] = <<-EMAP
 function(doc) {
     if (doc.type === "{{design_document}}") {
-        emit([#{emit_key.map{|key| "doc."+key}.join(',')}], null);
+        emit([#{emit_key.map{|key| "doc."+key.to_s}.join(',')}], null);
     }
 }
 EMAP
