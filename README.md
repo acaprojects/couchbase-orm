@@ -120,11 +120,18 @@ a particular author. The same thing, using the view directly would be:
 `Comment.by_author(key: 'name')`
 
 When using a compound key, the usage is the same, you just give the full key : 
-`Comment.by_read(key: '["'+user_id+'",false]')` # gives all unread comments for one particular user
-or even a range
-`Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]')` # gives all comments that have been seen more than 10 times but less than 20
 
-Compound keys allows to decide the order of the results, and you can reverse that by passing `descending: true`
+```ruby
+   Comment.by_read(key: '["'+user_id+'",false]') # gives all unread comments for one particular user
+   
+   # or even a range !
+   
+   Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]') # gives all comments that have been seen more than 10 times but less than 20
+```
+
+Check this couchbase help page to learn more on what's possible with compound keys : https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html
+
+Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
 
 ## Associations and Indexes
 
