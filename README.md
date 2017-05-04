@@ -101,6 +101,15 @@ can then be used for filtering results or ordering.
       # * the by_author view above
       # * def find_by_author(author); end
       index_view :author
+      
+      # You can make compound keys by passing an array to :emit_key
+      # this allow to query by read/unread comments
+      view :by_read, emit_key: [:user_id, :read]
+      # this allow to query by view_count
+      view :by_view_count, emit_key: [:user_id, :view_count]
+       
+      
+      
 
       validates_presence_of :author, :body
     end
@@ -109,6 +118,20 @@ can then be used for filtering results or ordering.
 You can use `Comment.find_by_author('name')` to obtain all the comments by
 a particular author. The same thing, using the view directly would be:
 `Comment.by_author(key: 'name')`
+
+When using a compound key, the usage is the same, you just give the full key : 
+
+```ruby
+   Comment.by_read(key: '["'+user_id+'",false]') # gives all unread comments for one particular user
+   
+   # or even a range !
+   
+   Comment.by_view_count(startkey: '["'+user_id+'",10]', endkey: '["'+user_id+'",20]') # gives all comments that have been seen more than 10 times but less than 20
+```
+
+Check this couchbase help page to learn more on what's possible with compound keys : https://developer.couchbase.com/documentation/server/3.x/admin/Views/views-translateSQL.html
+
+Ex : Compound keys allows to decide the order of the results, and you can reverse it by passing `descending: true`
 
 ## Associations and Indexes
 
