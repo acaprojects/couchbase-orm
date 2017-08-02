@@ -167,7 +167,7 @@ The request above pulls the same database document each time and returns it. A s
 | Stat | Couchbase Ruby Model | Couchbase-ORM |
 | :--- | :---                 |   :---        |
 |Transactions|2500 hits|2500 hits|
-|Elapsed time|12.24 secs|8.20 secs|
-|Response time|0.88 secs|0.47 secs|
-|Transaction rate|204.25 trans/sec|304.88 trans/sec|
+|Elapsed time|12.24 secs|6.82 secs|
+|Response time|0.88 secs|0.34 secs|
+|Transaction rate|204.25 trans/sec|366.57 trans/sec|
 |Request Code|[ruby-model-app](https://github.com/QuayPay/coauth/blob/95bbf5e5c3b3340e5af2da494b90c91c5e3d6eaa/app/controllers/auth/authorities_controller.rb#L6)|[couch-orm-app](https://github.com/QuayPay/coauth/blob/87f6fdeaab784ba252a5d38bbcf9e6b0477bb504/app/controllers/auth/authorities_controller.rb#L8)|
