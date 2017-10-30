@@ -1,9 +1,11 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
 
-require 'libcouchbase'
-Libcouchbase::Defaults.username = 'tester'
-Libcouchbase::Defaults.password = 'password123'
+if ENV['TRAVIS_TEST']
+    require 'libcouchbase'
+    Libcouchbase::Defaults.username = 'tester'
+    Libcouchbase::Defaults.password = 'password123'
+end
 
 require 'couchbase-orm'
 require 'minitest/assertions'
