@@ -1,12 +1,12 @@
 language: ruby
 rvm:
-  - ruby-2.3.1
-  - ruby-2.2.5
+  - ruby-2.4.2
+  - ruby-2.3.5
   - ruby-head
-  - rubinius-3.62
-  - rubinius
-  - jruby-9.1.5.0
+  - jruby-9.1.13.0
   - jruby-head
+  - rubinius
+  - rubinius-3.86
 branches:
   only:
     - master
@@ -32,6 +32,6 @@ matrix:
     - rvm: jruby-head
     - rvm: ruby-head
     - rvm: rubinius
-    - rvm: rubinius-3.62
+    - rvm: rubinius-3.86
 sudo: required
 dist: trusty
