@@ -1,32 +1,41 @@
 # Couchbase ORM for Rails
 
+[![Build Status](https://secure.travis-ci.org/acaprojects/couchbase-orm.svg)](http://travis-ci.org/acaprojects/couchbase-orm)
+
 ## Rails integration
 
 To generate config you can use `rails generate couchbase_orm:config`:
 
-    $ rails generate couchbase_orm:config
-    create  config/couchbase.yml
+    $ rails generate couchbase_orm:config dev_bucket dev_user dev_password
+      => create  config/couchbase.yml
 
 It will generate this `config/couchbase.yml` for you:
 
     common: &common
       hosts: localhost
-      password:
+      username: dev_user
+      password: dev_password
 
     development:
       <<: *common
-      bucket: default
+      bucket: dev_bucket
 
     test:
       <<: *common
-      bucket: app_name_test
-      password: for_test_bucket
+      bucket: dev_bucket_test
 
     # set these environment variables on your production server
     production:
-      hosts: <%= ENV['COUCHBASE_HOST'] || ENV['COUCHBASE_HOSTS'] %>
-      bucket: <%= ENV['COUCHBASE_BUCKET'] %>
-      password: <%= ENV['COUCHBASE_PASSWORD'] %>
+    hosts: <%= ENV['COUCHBASE_HOST'] || ENV['COUCHBASE_HOSTS'] %>
+    bucket: <%= ENV['COUCHBASE_BUCKET'] %>
+    username: <%= ENV['COUCHBASE_USER'] %>
+    password: <%= ENV['COUCHBASE_PASSWORD'] %>
+
+Views are generated on application load if they don't exist or mismatch.
+This works fine in production however by default in development models are lazy loaded.
+
+    # config/environments/development.rb
+    config.eager_load = true
 
 
 ## Examples
