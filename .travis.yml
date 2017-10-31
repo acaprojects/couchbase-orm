@@ -25,8 +25,6 @@ before_install:
   - sleep 1
   - /opt/couchbase/bin/couchbase-cli user-manage   -c 127.0.0.1:8091 -u admin -p password --set --rbac-username tester --rbac-password password123 --rbac-name "Auto Tester" --roles admin --auth-domain local
   - export TRAVIS_TEST=true
-before_script:
-  - rake compile
 matrix:
   allow_failures:
     - rvm: jruby-head
