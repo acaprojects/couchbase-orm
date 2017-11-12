@@ -165,14 +165,22 @@ module CouchbaseOrm
 
             assign_attributes(hash)
 
-            # Ensure the type is set
-            @__attributes__[:type] = self.class.design_document
-            @__attributes__.delete(:id)
-
-            options = {}
+            options = {extended: true}
             options[:cas] = @__metadata__.cas if with_cas
 
-            resp = self.class.bucket.replace(_id, @__attributes__, **options)
+            # There is a limit of 16 subdoc operations per request
+            resp = if hash.length <= 16
+                subdoc = self.class.bucket.subdoc(_id)
+                hash.each do |key, value|
+                    subdoc.dict_upsert(key, value)
+                end
+                subdoc.execute!(options)
+            else
+                # Fallback to writing the whole document
+                @__attributes__[:type] = self.class.design_document
+                @__attributes__.delete(:id)
+                self.class.bucket.replace(_id, @__attributes__, **options)
+            end
 
             # Ensure the model is up to date
             @__metadata__.key = resp.key
