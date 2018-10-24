@@ -93,7 +93,7 @@ describe CouchbaseOrm::Index do
         enum.destroy
     end
 
-    it "should not overwrite index's that do not belong to the current model"
+    it "should not overwrite index's that do not belong to the current model" do
         joe = IndexTest.create!
         expect(IndexTest.find_by_email(nil)).to eq(nil)
 
