@@ -98,7 +98,17 @@ module CouchbaseOrm
             # new one. the id of the current record is used as the key's value.
             after_save do |record|
                 original_key = instance_variable_get(original_bucket_key_var)
-                record.class.bucket.delete(original_key, quiet: true) if original_key
+
+                if original_key
+                    check_ref_id = record.class.bucket.get(original_key, extended: true, quiet: true)
+                    if check_ref_id && check_ref_id.value == record.id
+                        begin
+                            record.class.bucket.delete(original_key, cas: check_ref_id.cas)
+                        rescue ::Libcouchbase::Error::KeyExists
+                            # Errors here can be ignored. Just means the key was updated elswhere
+                        end
+                    end
+                end
 
                 unless presence == false && attrs.length == 1 && record[attrs[0]].nil?
                     record.class.bucket.set(record.send(bucket_key_method), record.id, plain: true)
@@ -109,7 +119,14 @@ module CouchbaseOrm
             # cleanup by removing the bucket key before the record is deleted
             # TODO: handle unpersisted, modified component values
             before_destroy do |record|
-                record.class.bucket.delete(record.send(bucket_key_method), quiet: true)
+                check_ref_id = record.class.bucket.get(record.send(bucket_key_method), extended: true, quiet: true)
+                if check_ref_id && check_ref_id.value == record.id
+                    begin
+                        record.class.bucket.delete(record.send(bucket_key_method), cas: check_ref_id.cas)
+                    rescue ::Libcouchbase::Error::KeyExists
+                        # Errors here can be ignored. Just means the key was updated elswhere
+                    end
+                end
                 true
             end
 

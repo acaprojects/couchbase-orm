@@ -92,4 +92,40 @@ describe CouchbaseOrm::Index do
         expect(enum.visibility).to eq(2)
         enum.destroy
     end
+
+    it "should not overwrite index's that do not belong to the current model"
+        joe = IndexTest.create!
+        expect(IndexTest.find_by_email(nil)).to eq(nil)
+
+        joe.email = 'joe@aca.com'
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+
+        joe2 = IndexTest.create!
+        joe2.email = 'joe@aca.com' # joe here is deliberate
+        joe2.save!
+
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe2)
+
+        # Joe's indexing should not remove joe2 index
+        joe.email = nil
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe2)
+
+        # Test destroy
+        joe.email = 'joe@aca.com'
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+
+        # Index should not be updated
+        joe2.destroy
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+
+        # index should be updated
+        joe.email = nil
+        joe.save!
+        expect(IndexTest.find_by_email('joe@aca.com')).to eq(nil)
+
+        joe.destroy
+    end
 end
