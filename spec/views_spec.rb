@@ -1,7 +1,7 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
 require File.expand_path("../support", __FILE__)
-
+require 'set'
 
 class ViewTest < CouchbaseOrm::Base
     attribute :name, type: String
@@ -68,6 +68,6 @@ describe CouchbaseOrm::Views do
             ob.destroy
         }
 
-        expect(docs).to eq(['bob', 'jane'])
+        expect(Set.new(docs)).to eq(Set.new(['bob', 'jane']))
     end
 end

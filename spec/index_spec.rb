@@ -9,6 +9,13 @@ class IndexTest < CouchbaseOrm::Base
     ensure_unique :email, presence: false
 end
 
+class NoUniqueIndexTest < CouchbaseOrm::Base
+    attribute :email, type: String
+    attribute :name,  type: String, default: :joe
+
+    index :email, presence: false
+end
+
 class EnumTest < CouchbaseOrm::Base
     enum visibility: [:group, :authority, :public], default: :authority
 end
@@ -94,37 +101,37 @@ describe CouchbaseOrm::Index do
     end
 
     it "should not overwrite index's that do not belong to the current model" do
-        joe = IndexTest.create!
-        expect(IndexTest.find_by_email(nil)).to eq(nil)
+        joe = NoUniqueIndexTest.create!
+        expect(NoUniqueIndexTest.find_by_email(nil)).to eq(nil)
 
         joe.email = 'joe@aca.com'
         joe.save!
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(joe)
 
-        joe2 = IndexTest.create!
+        joe2 = NoUniqueIndexTest.create!
         joe2.email = 'joe@aca.com' # joe here is deliberate
         joe2.save!
 
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe2)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(joe2)
 
         # Joe's indexing should not remove joe2 index
         joe.email = nil
         joe.save!
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe2)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(joe2)
 
         # Test destroy
         joe.email = 'joe@aca.com'
         joe.save!
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(joe)
 
         # Index should not be updated
         joe2.destroy
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(joe)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(joe)
 
         # index should be updated
         joe.email = nil
         joe.save!
-        expect(IndexTest.find_by_email('joe@aca.com')).to eq(nil)
+        expect(NoUniqueIndexTest.find_by_email('joe@aca.com')).to eq(nil)
 
         joe.destroy
     end
