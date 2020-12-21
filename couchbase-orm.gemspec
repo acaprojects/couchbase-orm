@@ -1,4 +1,5 @@
 require File.expand_path("../lib/couchbase-orm/version", __FILE__)
+require File.expand_path("../lib/couchbase-orm/logger", __FILE__)
 
 Gem::Specification.new do |gem|
     gem.name          = "couchbase-orm"
@@ -13,7 +14,7 @@ Gem::Specification.new do |gem|
     gem.required_ruby_version = '>= 2.1.0'
     gem.require_paths = ["lib"]
 
-    gem.add_runtime_dependency     'libcouchbase', '~> 1.2'
+    # gem.add_runtime_dependency     'libcouchbase', '~> 1.2'
     gem.add_runtime_dependency     'activemodel',  '>= 4.0', '< 6.0'
     gem.add_runtime_dependency     'radix',        '~> 2.2' # converting numbers to and from any base
 
