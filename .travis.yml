@@ -1,9 +1,9 @@
 language: ruby
 rvm:
   - ruby-2.4.2
-  - ruby-2.3.5
+  - ruby-2.5.7
   - ruby-head
-  - jruby-9.1.13.0
+  - jruby-9.2.9.0
   - jruby-head
   - rubinius
   - rubinius-3.86
@@ -24,6 +24,7 @@ before_install:
   - /opt/couchbase/bin/couchbase-cli bucket-create -c 127.0.0.1:8091 -u admin -p password --bucket=default --bucket-type=couchbase --bucket-ramsize=160 --bucket-replica=0 --wait
   - sleep 1
   - /opt/couchbase/bin/couchbase-cli user-manage   -c 127.0.0.1:8091 -u admin -p password --set --rbac-username tester --rbac-password password123 --rbac-name "Auto Tester" --roles admin --auth-domain local
+  - curl http://admin:password@localhost:8093/query/service -d 'statement=CREATE INDEX `default_type` ON `default`(`type`)'
   - export TRAVIS_TEST=true
 matrix:
   allow_failures:
