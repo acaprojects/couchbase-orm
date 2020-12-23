@@ -5,6 +5,7 @@ require 'active_model'
 require 'active_support/hash_with_indifferent_access'
 require 'couchbase-orm/error'
 require 'couchbase-orm/views'
+require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
 require 'couchbase-orm/utilities/join'
@@ -28,6 +29,7 @@ module CouchbaseOrm
         include Persistence
         include Associations
         include Views
+        include N1ql
 
         extend Join
         extend Enum
@@ -225,7 +227,7 @@ module CouchbaseOrm
             @__attributes__[name]
         end
         alias_method :read_attribute_for_serialization, :attribute
-        
+
         def attribute=(name, value)
             __send__(:"#{name}=", value)
         end

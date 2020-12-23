@@ -1,5 +1,4 @@
 require File.expand_path("../lib/couchbase-orm/version", __FILE__)
-require File.expand_path("../lib/couchbase-orm/logger", __FILE__)
 
 Gem::Specification.new do |gem|
     gem.name          = "couchbase-orm"
