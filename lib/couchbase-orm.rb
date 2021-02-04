@@ -13,6 +13,10 @@ module CouchbaseOrm
         result = nil
         result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
 
+        if result && result.is_a?(Array)
+            return result.map { |r| self.try_load(r) }.compact
+        end
+
         if result && result.value.is_a?(Hash) && result.value[:type]
             ddoc = result.value[:type]
             ::CouchbaseOrm::Base.descendants.each do |model|

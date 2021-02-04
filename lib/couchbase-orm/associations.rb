@@ -55,6 +55,55 @@ module CouchbaseOrm
                 end
             end
 
+            def has_and_belongs_to_many(name, **options)
+                @associations ||= []
+                @associations << [name.to_sym, options[:dependent]]
+
+                ref = options[:foreign_key] || :"#{name.to_s.singularize}_ids"
+                ref_ass = :"#{ref}="
+                instance_var = :"@__assoc_#{name}"
+
+                # Class reference
+                assoc = (options[:class_name] || name.to_s.singularize.camelize).to_s
+
+                # Create the local setter / getter
+                attribute(ref) { |value|
+                    remove_instance_variable(instance_var) if instance_variable_defined?(instance_var)
+                    value
+                }
+
+                # Define reader
+                define_method(name) do
+                    return instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+                    val = if options[:polymorphic]
+                        ::CouchbaseOrm.try_load(self.send(ref))
+                    else
+                        assoc.constantize.find(self.send(ref), quiet: true)
+                    end
+                    val = Array.wrap(val)
+                    instance_variable_set(instance_var, val)
+                    val
+                end
+
+                # Define writer
+                attr_writer name
+                define_method(:"#{name}=") do |value|
+                    if value
+                        if !options[:polymorphic]
+                            klass = assoc.constantize
+                            value.each do |v|
+                                raise ArgumentError, "type mismatch on association: #{klass.design_document} != #{v.class.design_document}" if klass.design_document != v.class.design_document
+                            end
+                        end
+                        self.send(ref_ass, value.map(&:id))
+                    else
+                        self.send(ref_ass, nil)
+                    end
+
+                    instance_variable_set(instance_var, value)
+                end
+            end
+
             def associations
                 @associations || []
             end
@@ -72,6 +121,8 @@ module CouchbaseOrm
                     when :destroy, :delete
                         if model.respond_to?(:stream)
                             model.stream { |mod| mod.__send__(dependent) }
+                        elsif model.is_a?(Array)
+                            model.each { |m| m.__send__(dependent) }
                         else
                             model.__send__(dependent)
                         end
