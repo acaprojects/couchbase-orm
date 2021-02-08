@@ -102,6 +102,15 @@ module CouchbaseOrm
 
                     instance_variable_set(instance_var, value)
                 end
+
+                after_save do
+                    old, new = previous_changes[ref]
+                    adds = (new || []) - (old || [])
+                    subs = (old || []) - (new || [])
+
+                    update_has_and_belongs_to_many_reverse_association(name, adds, true)
+                    update_has_and_belongs_to_many_reverse_association(name, subs, false)
+                end if options[:autosave]
             end
 
             def associations
@@ -109,6 +118,25 @@ module CouchbaseOrm
             end
         end
 
+        def update_has_and_belongs_to_many_reverse_association(name, keys, is_add)
+            foreign_key = "#{self.class.to_s.underscore}_ids"
+            unless keys.empty?
+                self.__send__(name.to_sym)
+                    .select { |v| keys.include?(v.id) }
+                    .each do |v|
+                        if v.respond_to?(foreign_key.to_sym)
+                            tab = v.__send__(foreign_key.to_sym)
+                            if is_add
+                                tab = (tab || []) << self.id
+                            else
+                                tab = (tab || []) >> self.id
+                            end
+                            v.__send__(:"#{foreign_key}=", tab)
+                            v.__send__(:save!)
+                        end
+                    end
+            end
+        end
 
         def destroy_associations!
             assoc = self.class.associations

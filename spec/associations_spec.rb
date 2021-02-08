@@ -20,13 +20,13 @@ end
 class Assembly < CouchbaseOrm::Base
     attribute :name
 
-    has_and_belongs_to_many :parts
+    has_and_belongs_to_many :parts, autosave: true
 end
 
 class Part < CouchbaseOrm::Base
     attribute :name
 
-    has_and_belongs_to_many :assemblies, dependent: :destroy
+    has_and_belongs_to_many :assemblies, dependent: :destroy, autosave: true
 end
 
 
@@ -109,8 +109,7 @@ describe CouchbaseOrm::Associations do
         it "should work with dependent associations" do
             assembly = Assembly.create!(name: 'a1')
             part = Part.create!(name: 'p1', assemblies: [assembly])
-            assembly.parts = [part]
-            assembly.save!
+            assembly.reload
 
             expect(assembly.persisted?).to be(true)
             expect(part.persisted?).to be(true)
@@ -123,8 +122,7 @@ describe CouchbaseOrm::Associations do
         it "should cache associations" do
             assembly = Assembly.create!(name: 'a1')
             part = Part.create!(name: 'p1', assembly_ids: [assembly.id])
-            assembly.parts = [part]
-            assembly.save!
+            assembly.reload
 
             id = part.assemblies.first.__id__
             expect(assembly.__id__).not_to eq(part.assemblies.first.__id__)
@@ -141,8 +139,7 @@ describe CouchbaseOrm::Associations do
         it "should ignore associations when delete is used" do
             assembly = Assembly.create!(name: 'a1')
             part = Part.create!(name: 'p1', assembly_ids: [assembly.id])
-            assembly.parts = [part]
-            assembly.save!
+            assembly.reload
 
             id = part.id
             part.delete
@@ -162,6 +159,14 @@ describe CouchbaseOrm::Associations do
             ensure
                 assembly.delete
             end
+        end
+
+        it "should update association" do
+            assembly = Assembly.create!(name: 'a1')
+            part = Part.create!(name: 'p1', assembly_ids: [assembly.id])
+            assembly.reload
+
+            expect(assembly.parts).to match_array([part])
         end
 
         describe Assembly do
