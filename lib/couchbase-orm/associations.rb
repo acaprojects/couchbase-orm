@@ -112,8 +112,8 @@ module CouchbaseOrm
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
 
-                    update_has_and_belongs_to_many_reverse_association(name, adds, true)
-                    update_has_and_belongs_to_many_reverse_association(name, subs, false)
+                    update_has_and_belongs_to_many_reverse_association(name, adds, true, options)
+                    update_has_and_belongs_to_many_reverse_association(name, subs, false, options)
                 end
 
                 after_save save_method
@@ -142,14 +142,14 @@ module CouchbaseOrm
             end
         end
 
-        def update_has_and_belongs_to_many_reverse_association(name, keys, is_add)
-            target = self.class.to_s.pluralize.underscore
+        def update_has_and_belongs_to_many_reverse_association(name, keys, is_add, **options)
+            remote_method = options[:inverse_of] || self.class.to_s.pluralize.underscore.to_sym
             unless keys.empty?
                 self.__send__(name.to_sym)
                     .select { |v| keys.include?(v.id) }
                     .each do |v|
-                        if v.respond_to?(target)
-                            tab = v.__send__(target.to_sym) || []
+                        if v.respond_to?(remote_method)
+                            tab = v.__send__(remote_method) || []
                             index = tab.find_index(self)
                             if is_add && !index
                                 tab = tab.dup
@@ -158,7 +158,7 @@ module CouchbaseOrm
                                 tab = tab.dup
                                 tab.delete_at(index)
                             end
-                            v.__send__(:"#{target}=", tab)
+                            v.__send__(:"#{remote_method}=", tab)
                             v.__send__(:save!)
                         end
                     end
