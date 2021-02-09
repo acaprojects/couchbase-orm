@@ -103,35 +103,62 @@ module CouchbaseOrm
                     instance_variable_set(instance_var, value)
                 end
 
-                after_save do
+                return unless options[:autosave]
+
+                save_method = :"autosave_associated_records_for_#{name}"
+
+                define_non_cyclic_method(save_method) do
                     old, new = previous_changes[ref]
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
 
                     update_has_and_belongs_to_many_reverse_association(name, adds, true)
                     update_has_and_belongs_to_many_reverse_association(name, subs, false)
-                end if options[:autosave]
+                end
+
+                after_save save_method
             end
 
             def associations
                 @associations || []
             end
+
+            def define_non_cyclic_method(name, &block)
+                return if method_defined?(name)
+
+                define_method(name) do |*args|
+                    result = true; @_already_called ||= {}
+                    # Loop prevention for validation of associations
+                    unless @_already_called[name]
+                        begin
+                            @_already_called[name] = true
+                            result = instance_eval(&block)
+                        ensure
+                            @_already_called[name] = false
+                        end
+                    end
+                    result
+                end
+            end
         end
 
         def update_has_and_belongs_to_many_reverse_association(name, keys, is_add)
-            foreign_key = "#{self.class.to_s.underscore}_ids"
+            target = self.class.to_s.pluralize.underscore
             unless keys.empty?
                 self.__send__(name.to_sym)
                     .select { |v| keys.include?(v.id) }
                     .each do |v|
-                        if v.respond_to?(foreign_key.to_sym)
-                            tab = v.__send__(foreign_key.to_sym)
-                            if is_add
-                                tab = (tab || []) << self.id
-                            else
-                                tab = (tab || []) >> self.id
+                        if v.respond_to?(target)
+                            tab = v.__send__(target.to_sym) || []
+                            index = tab.find_index(self)
+                            if is_add && !index
+                                tab = tab.dup
+                                tab.push(self)
+                            elsif !is_add && index
+                                tab = tab.dup
+                                tab.delete_at(index)
                             end
-                            v.__send__(:"#{foreign_key}=", tab)
+                            v.__send__(:"#{target}=", tab)
                             v.__send__(:save!)
                         end
                     end

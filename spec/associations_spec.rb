@@ -161,12 +161,19 @@ describe CouchbaseOrm::Associations do
             end
         end
 
-        it "should update association" do
+        it "should update association with single" do
             assembly = Assembly.create!(name: 'a1')
             part = Part.create!(name: 'p1', assemblies: [assembly])
-            assembly.reload
 
-            expect(assembly.parts).to match_array([part])
+            expect(assembly.parts.map(&:id)).to match_array([part.id])
+        end
+
+        it 'should update association with multiple' do
+            assembly = Assembly.create!(name: 'a1')
+            part1 = Part.create!(name: 'p1', assemblies: [assembly])
+            part2 = Part.create!(name: 'p2', assemblies: [assembly])
+
+            expect(assembly.parts.map(&:id)).to match_array([part1.id, part2.id])
         end
 
         describe Assembly do
