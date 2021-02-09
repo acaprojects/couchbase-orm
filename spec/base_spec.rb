@@ -101,6 +101,16 @@ describe CouchbaseOrm::Base do
         end
     end
 
+    it "should try to load a model with nothing but single-multiple ID" do
+        begin
+            bases = [BaseTest.create!(name: 'joe')]
+            objs = CouchbaseOrm.try_load(bases.map(&:id))
+            expect(objs).to match_array(bases)
+        ensure
+            bases.each(&:destroy)
+        end
+    end
+
     it "should try to load a model with nothing but multiple ID" do
         begin
             bases = [BaseTest.create!(name: 'joe'), CompareTest.create!(age: 12)]

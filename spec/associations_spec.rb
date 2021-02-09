@@ -163,7 +163,7 @@ describe CouchbaseOrm::Associations do
 
         it "should update association" do
             assembly = Assembly.create!(name: 'a1')
-            part = Part.create!(name: 'p1', assembly_ids: [assembly.id])
+            part = Part.create!(name: 'p1', assemblies: [assembly])
             assembly.reload
 
             expect(assembly.parts).to match_array([part])

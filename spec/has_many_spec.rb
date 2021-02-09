@@ -57,7 +57,7 @@ shared_examples "has_many example" do |parameter|
         expect(rate1.respond_to?(:"object_#{@context}_tests")).to be(true)
         docs = rate1.try(:"object_#{@context}_tests").collect(&:name)
 
-        expect(docs).to eq(['bob', 'jane'])
+        expect(docs).to match_array(['bob', 'jane'])
     end
 end
 
