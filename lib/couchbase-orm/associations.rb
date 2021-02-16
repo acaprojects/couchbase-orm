@@ -112,11 +112,12 @@ module CouchbaseOrm
                     adds = (new || []) - (old || [])
                     subs = (old || []) - (new || [])
 
-                    update_has_and_belongs_to_many_reverse_association(name, adds, true, options)
-                    update_has_and_belongs_to_many_reverse_association(name, subs, false, options)
+                    update_has_and_belongs_to_many_reverse_association(assoc, adds, true, options)
+                    update_has_and_belongs_to_many_reverse_association(assoc, subs, false, options)
                 end
 
-                after_save save_method
+                after_create save_method
+                after_update save_method
             end
 
             def associations
@@ -142,26 +143,30 @@ module CouchbaseOrm
             end
         end
 
-        def update_has_and_belongs_to_many_reverse_association(name, keys, is_add, **options)
+        def update_has_and_belongs_to_many_reverse_association(assoc, keys, is_add, **options)
             remote_method = options[:inverse_of] || self.class.to_s.pluralize.underscore.to_sym
-            unless keys.empty?
-                self.__send__(name.to_sym)
-                    .select { |v| keys.include?(v.id) }
-                    .each do |v|
-                        if v.respond_to?(remote_method)
-                            tab = v.__send__(remote_method) || []
-                            index = tab.find_index(self)
-                            if is_add && !index
-                                tab = tab.dup
-                                tab.push(self)
-                            elsif !is_add && index
-                                tab = tab.dup
-                                tab.delete_at(index)
-                            end
-                            v.__send__(:"#{remote_method}=", tab)
-                            v.__send__(:save!)
-                        end
-                    end
+            return if keys.empty?
+
+            models = if options[:polymorphic]
+                      ::CouchbaseOrm.try_load(keys)
+                  else
+                      assoc.constantize.find(keys, quiet: true)
+                  end
+            models = Array.wrap(models)
+            models.each do |v|
+                next unless v.respond_to?(remote_method)
+
+                tab = v.__send__(remote_method) || []
+                index = tab.find_index(self)
+                if is_add && !index
+                    tab = tab.dup
+                    tab.push(self)
+                elsif !is_add && index
+                    tab = tab.dup
+                    tab.delete_at(index)
+                end
+                v.__send__(:"#{remote_method}=", tab)
+                v.__send__(:save!)
             end
         end
 

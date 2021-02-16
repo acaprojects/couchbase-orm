@@ -161,19 +161,43 @@ describe CouchbaseOrm::Associations do
             end
         end
 
-        it "should update association with single" do
+        it "should add association with single" do
             assembly = Assembly.create!(name: 'a1')
             part = Part.create!(name: 'p1', assemblies: [assembly])
 
-            expect(assembly.parts.map(&:id)).to match_array([part.id])
+            expect(assembly.reload.parts.map(&:id)).to match_array([part.id])
         end
 
-        it 'should update association with multiple' do
+        it 'should add association with multiple' do
             assembly = Assembly.create!(name: 'a1')
             part1 = Part.create!(name: 'p1', assemblies: [assembly])
             part2 = Part.create!(name: 'p2', assemblies: [assembly])
 
-            expect(assembly.parts.map(&:id)).to match_array([part1.id, part2.id])
+            expect(assembly.reload.parts.map(&:id)).to match_array([part1.id, part2.id])
+        end
+
+        it "should remove association with single" do
+            assembly1 = Assembly.create!(name: 'a1')
+            assembly2 = Assembly.create!(name: 'a2')
+            part = Part.create!(name: 'p1', assemblies: [assembly1])
+            part.assemblies = [assembly2]
+            part.save!
+
+            expect(assembly1.reload.parts.map(&:id)).to be_empty
+            expect(assembly2.reload.parts.map(&:id)).to match_array([part.id])
+        end
+
+        it 'should remove association with multiple' do
+            assembly1 = Assembly.create!(name: 'a1')
+            assembly2 = Assembly.create!(name: 'a2')
+            part1 = Part.create!(name: 'p1', assemblies: [assembly1])
+            part2 = Part.create!(name: 'p2', assemblies: [assembly2])
+
+            part1.assemblies = part1.assemblies + [assembly2]
+            part1.save!
+
+            expect(assembly1.reload.parts.map(&:id)).to match_array([part1.id])
+            expect(assembly2.reload.parts.map(&:id)).to match_array([part1.id, part2.id])
         end
 
         describe Assembly do
