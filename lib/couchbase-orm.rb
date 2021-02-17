@@ -11,7 +11,17 @@ module CouchbaseOrm
 
     def self.try_load(id)
         result = nil
+        was_array = id.is_a?(Array)
+        if was_array && id.length == 1
+            id = id.first
+        end
         result = id.respond_to?(:cas) ? id : CouchbaseOrm::Base.bucket.get(id, quiet: true, extended: true)
+        if was_array
+            result = Array.wrap(result)
+        end
+        if result && result.is_a?(Array)
+            return result.map { |r| self.try_load(r) }.compact
+        end
 
         if result && result.value.is_a?(Hash) && result.value[:type]
             ddoc = result.value[:type]
