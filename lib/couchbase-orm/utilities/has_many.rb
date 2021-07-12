@@ -13,7 +13,7 @@ module CouchbaseOrm
             remote_method = :"find_by_#{foreign_key}"
         end
 
-        relset_varname = "@#{model}_rel_set"
+        instance_var = "@__assoc_#{model}"
 
         klass = begin
                     class_name.constantize
@@ -34,7 +34,7 @@ module CouchbaseOrm
 
         if remote_class
             define_method(model) do
-                return self.instance_variable_get(relset_varname) if instance_variable_defined?(relset_varname)
+                return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
 
                 remote_klass = remote_class.constantize
                 enum = klass.__send__(remote_method, key: self.id) { |row|
@@ -46,12 +46,12 @@ module CouchbaseOrm
                     end
                 }
 
-                self.instance_variable_set(relset_varname, enum)
+                self.instance_variable_set(instance_var, enum)
             end
         else
             define_method(model) do
-                return self.instance_variable_get(relset_varname) if instance_variable_defined?(relset_varname)
-                self.instance_variable_set(relset_varname, klass.__send__(remote_method, self.id))
+                return self.instance_variable_get(instance_var) if instance_variable_defined?(instance_var)
+                self.instance_variable_set(instance_var, klass.__send__(remote_method, self.id))
             end
         end
 
