@@ -8,6 +8,16 @@ module CouchbaseOrm
     module N1ql
         extend ActiveSupport::Concern
 
+        # sanitize for injection query
+        def self.sanitize(value)
+            if value.is_a?(String)
+                value.gsub("'", "''").gsub("\\"){"\\\\"}.gsub('"', '\"')
+            elsif value.is_a?(Array)
+                value.map{ |v| sanitize(v) }
+            else
+                value
+            end
+        end
 
         module ClassMethods
             # Defines a query N1QL for the model
@@ -73,15 +83,14 @@ module CouchbaseOrm
 
             private
 
-            # TODO: secure it for injection query
             def convert_values(values)
                 Array.wrap(values).compact.map do |v|
                     if v.class == String
-                        "\"#{v}\""
+                        "'#{N1ql.sanitize(v)}'"
                     elsif v.class == Date || v.class == Time
-                        "\"#{v.iso8601(3)}\""
+                        "'#{v.iso8601(3)}'"
                     else
-                        v.to_s
+                        N1ql.sanitize(v).to_s
                     end
                 end
             end
@@ -90,8 +99,8 @@ module CouchbaseOrm
                 where = keys.each_with_index
                             .reject { |key, i| values.try(:[], i).nil? }
                             .map { |key, i| "#{key} = #{values[i] }" }
-                            .join(" and ")
-                "type=\"#{design_document}\" #{"and " + where unless where.blank?}"
+                            .join(" AND ")
+                "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
 
             # order-by-clause ::= ORDER BY ordering-term [ ',' ordering-term ]*
