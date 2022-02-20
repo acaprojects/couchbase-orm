@@ -41,8 +41,10 @@ module CouchbaseOrm
                     case type
                     when :n1ql
                         remote_klass.find(row)
-                    else
+                    when :view
                         remote_klass.find(row.value[through_key])
+                    else
+                        raise 'type is unknown'
                     end
                 }
 
@@ -63,25 +65,27 @@ module CouchbaseOrm
             case type
             when :n1ql
                 build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
-            else
+            when :view
                 build_index_view(klass, remote_class, remote_method, through_key, foreign_key)
+            else
+                raise 'type is unknown'
             end
         end
 
         def build_index_view(klass, remote_class, remote_method, through_key, foreign_key)
             if remote_class
                 klass.class_eval do
-                view remote_method, map: <<-EMAP
-                    function(doc) {
-                        if (doc.type === "{{design_document}}" && doc.#{through_key}) {
-                        emit(doc.#{foreign_key}, null);
+                    view remote_method, map: <<-EMAP
+                        function(doc) {
+                            if (doc.type === "{{design_document}}" && doc.#{through_key}) {
+                            emit(doc.#{foreign_key}, null);
+                            }
                         }
-                    }
-                EMAP
+                    EMAP
                 end
             else
                 klass.class_eval do
-                index_view foreign_key, validate: false
+                    index_view foreign_key, validate: false
                 end
             end
         end
@@ -89,16 +93,16 @@ module CouchbaseOrm
         def build_index_n1ql(klass, remote_class, remote_method, through_key, foreign_key)
             if remote_class
                 klass.class_eval do
-                n1ql remote_method, query: proc { |bucket, values|
-                    bucket_name = bucket.bucket
-                    bucket.n1ql.select("raw #{through_key}")
-                        .from("`#{bucket_name}`")
-                        .where("type=\"#{design_document}\" and #{foreign_key} = #{values[0]}")
-                }
+                    n1ql remote_method, query: proc { |bucket, values|
+                        bucket_name = bucket.bucket
+                        bucket.n1ql.select("raw #{through_key}")
+                            .from("`#{bucket_name}`")
+                            .where("type=\"#{design_document}\" and #{foreign_key} = #{values[0]}")
+                    }
                 end
             else
                 klass.class_eval do
-                index_n1ql foreign_key, validate: false
+                    index_n1ql foreign_key, validate: false
                 end
             end
         end

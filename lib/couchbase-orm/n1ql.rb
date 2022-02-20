@@ -7,28 +7,30 @@ require 'active_support/core_ext/object/try'
 module CouchbaseOrm
     module N1ql
         extend ActiveSupport::Concern
-        # Defines a query N1QL for the model
-        #             #
-        #             # @param [Symbol, String, Array] names names of the views
-        #             # @param [Hash] options options passed to the {Couchbase::N1QL}
-        #             #
-        #             # @example Define some views for a model
-        #             #  class Post < CouchbaseOrm::Base
-        #             #    n1ql :all
-        #             #    n1ql :by_rating, emit_key: :rating
-        #             #  end
-        #             #
-        #             #  Post.by_rating.stream do |response|
-        #             #    # ...
-        #             #  end
-        # TODO: add range keys [:startkey, :endkey]
+
+
         module ClassMethods
+            # Defines a query N1QL for the model
+            #
+            # @param [Symbol, String, Array] names names of the views
+            # @param [Hash] options options passed to the {Couchbase::N1QL}
+            #
+            # @example Define some N1QL queries for a model
+            #  class Post < CouchbaseOrm::Base
+            #    n1ql :all
+            #    n1ql :by_rating, emit_key: :rating
+            #  end
+            #
+            #  Post.by_rating.stream do |response|
+            #    # ...
+            #  end
+            # TODO: add range keys [:startkey, :endkey]
             def n1ql(name, query: nil, emit_key: [], **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
                     raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
                 end
-                options = VIEW_DEFAULTS.merge(options)
+                options = N1QL_DEFAULTS.merge(options)
                 method_opts = {}
                 method_opts[:emit_key] = emit_key
 
@@ -51,8 +53,9 @@ module CouchbaseOrm
                     end
                 end
             end
+            N1QL_DEFAULTS = { include_docs: true }
 
-            # add a view and lookup method to the model for finding all records
+            # add a n1ql query and lookup method to the model for finding all records
             # using a value in the supplied attr.
             def index_n1ql(attr, validate: true, find_method: nil, n1ql_method: nil)
                 n1ql_method ||= "by_#{attr}"
@@ -67,8 +70,6 @@ module CouchbaseOrm
                                 end
                             "
             end
-
-            VIEW_DEFAULTS = { include_docs: true }
 
             private
 
@@ -93,7 +94,6 @@ module CouchbaseOrm
                 "type=\"#{design_document}\" #{"and " + where unless where.blank?}"
             end
 
-            #
             # order-by-clause ::= ORDER BY ordering-term [ ',' ordering-term ]*
             # ordering-term ::= expr [ ASC | DESC ] [ NULLS ( FIRST | LAST ) ]
             # see https://docs.couchbase.com/server/5.0/n1ql/n1ql-language-reference/orderby.html
