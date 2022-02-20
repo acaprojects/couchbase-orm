@@ -99,6 +99,7 @@ module CouchbaseOrm
         # The record is simply removed, no callbacks are executed.
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
+            CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
             self.class.bucket.delete(@__metadata__.key, options)
 
             @__metadata__.key = nil
@@ -121,6 +122,7 @@ module CouchbaseOrm
                 destroy_associations!
 
                 options[:cas] = @__metadata__.cas if with_cas
+                CouchbaseOrm.logger.debug "Data - Delete #{@__metadata__.key}"
                 self.class.bucket.delete(@__metadata__.key, options)
 
                 @__metadata__.key = nil
@@ -141,7 +143,7 @@ module CouchbaseOrm
             public_send(:"#{name}=", value)
             changed? ? save(validate: false) : true
         end
-        
+
         # Updates the attributes of the model from the passed-in hash and saves the
         # record. If the object is invalid, the saving will fail and false will be returned.
         def update(hash)
@@ -179,6 +181,7 @@ module CouchbaseOrm
                 # Fallback to writing the whole document
                 @__attributes__[:type] = self.class.design_document
                 @__attributes__.delete(:id)
+                CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
                 self.class.bucket.replace(_id, @__attributes__, **options)
             end
 
@@ -197,6 +200,7 @@ module CouchbaseOrm
             key = @__metadata__.key
             raise "unable to reload, model not persisted" unless key
 
+            CouchbaseOrm.logger.debug "Data - Get #{key}"
             resp = self.class.bucket.get(key, quiet: false, extended: true)
             @__attributes__ = ::ActiveSupport::HashWithIndifferentAccess.new(resp.value)
             @__metadata__.key = resp.key
@@ -209,6 +213,7 @@ module CouchbaseOrm
 
         # Updates the TTL of the document
         def touch(**options)
+            CouchbaseOrm.logger.debug "Data - Touch #{@__metadata__.key}"
             res = self.class.bucket.touch(@__metadata__.key, async: false, **options)
             @__metadata__.cas = resp.cas
             self
@@ -230,7 +235,7 @@ module CouchbaseOrm
 
                     _id = @__metadata__.key
                     options[:cas] = @__metadata__.cas if with_cas
-
+                    CouchbaseOrm.logger.debug { "Data - Replace #{_id} #{@__attributes__.to_s.truncate(200)}" }
                     resp = self.class.bucket.replace(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date
@@ -253,6 +258,7 @@ module CouchbaseOrm
                     @__attributes__.delete(:id)
 
                     _id = @id || self.class.uuid_generator.next(self)
+                    CouchbaseOrm.logger.debug { "Data - Insert #{_id} #{@__attributes__.to_s.truncate(200)}" }
                     resp = self.class.bucket.add(_id, @__attributes__, **options)
 
                     # Ensure the model is up to date

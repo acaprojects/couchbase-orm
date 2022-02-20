@@ -99,6 +99,7 @@ module CouchbaseOrm
                     raise Libcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
+                CouchbaseOrm.logger.debug "Data - Get #{ids}"
                 record = bucket.get(*ids, **options)
                 records = record.is_a?(Array) ? record : [record]
                 records.map! { |record|
@@ -119,6 +120,7 @@ module CouchbaseOrm
             alias_method :[], :find_by_id
 
             def exists?(id)
+                CouchbaseOrm.logger.debug "Data - Get #{id}"
                 !bucket.get(id, quiet: true).nil?
             end
             alias_method :has_key?, :exists?

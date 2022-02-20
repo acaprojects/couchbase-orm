@@ -52,6 +52,7 @@ module CouchbaseOrm
 
                     values = convert_values(opts[:key])
                     current_query = build_query(method_opts[:emit_key], values, query, opts)
+                    CouchbaseOrm.logger.debug { 'Query - ' + current_query.to_s.tr("\n", ' ') }
 
                     if result_modifier
                         opts[:include_docs] = true
