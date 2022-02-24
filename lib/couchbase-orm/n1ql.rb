@@ -7,28 +7,40 @@ require 'active_support/core_ext/object/try'
 module CouchbaseOrm
     module N1ql
         extend ActiveSupport::Concern
-        # Defines a query N1QL for the model
-        #             #
-        #             # @param [Symbol, String, Array] names names of the views
-        #             # @param [Hash] options options passed to the {Couchbase::N1QL}
-        #             #
-        #             # @example Define some views for a model
-        #             #  class Post < CouchbaseOrm::Base
-        #             #    n1ql :all
-        #             #    n1ql :by_rating, emit_key: :rating
-        #             #  end
-        #             #
-        #             #  Post.by_rating.stream do |response|
-        #             #    # ...
-        #             #  end
-        # TODO: add range keys [:startkey, :endkey]
+
+        # sanitize for injection query
+        def self.sanitize(value)
+            if value.is_a?(String)
+                value.gsub("'", "''").gsub("\\"){"\\\\"}.gsub('"', '\"')
+            elsif value.is_a?(Array)
+                value.map{ |v| sanitize(v) }
+            else
+                value
+            end
+        end
+
         module ClassMethods
+            # Defines a query N1QL for the model
+            #
+            # @param [Symbol, String, Array] names names of the views
+            # @param [Hash] options options passed to the {Couchbase::N1QL}
+            #
+            # @example Define some N1QL queries for a model
+            #  class Post < CouchbaseOrm::Base
+            #    n1ql :all
+            #    n1ql :by_rating, emit_key: :rating
+            #  end
+            #
+            #  Post.by_rating.stream do |response|
+            #    # ...
+            #  end
+            # TODO: add range keys [:startkey, :endkey]
             def n1ql(name, query: nil, emit_key: [], **options)
                 emit_key = Array.wrap(emit_key)
                 emit_key.each do |key|
                     raise "unknown emit_key attribute for n1ql :#{name}, emit_key: :#{key}" if key && @attributes[key].nil?
                 end
-                options = VIEW_DEFAULTS.merge(options)
+                options = N1QL_DEFAULTS.merge(options)
                 method_opts = {}
                 method_opts[:emit_key] = emit_key
 
@@ -40,6 +52,7 @@ module CouchbaseOrm
 
                     values = convert_values(opts[:key])
                     current_query = build_query(method_opts[:emit_key], values, query, opts)
+                    CouchbaseOrm.logger.debug { 'Query - ' + current_query.to_s.tr("\n", ' ') }
 
                     if result_modifier
                         opts[:include_docs] = true
@@ -51,8 +64,9 @@ module CouchbaseOrm
                     end
                 end
             end
+            N1QL_DEFAULTS = { include_docs: true }
 
-            # add a view and lookup method to the model for finding all records
+            # add a n1ql query and lookup method to the model for finding all records
             # using a value in the supplied attr.
             def index_n1ql(attr, validate: true, find_method: nil, n1ql_method: nil)
                 n1ql_method ||= "by_#{attr}"
@@ -68,19 +82,16 @@ module CouchbaseOrm
                             "
             end
 
-            VIEW_DEFAULTS = { include_docs: true }
-
             private
 
-            # TODO: secure it for injection query
             def convert_values(values)
                 Array.wrap(values).compact.map do |v|
                     if v.class == String
-                        "\"#{v}\""
+                        "'#{N1ql.sanitize(v)}'"
                     elsif v.class == Date || v.class == Time
-                        "\"#{v.iso8601(3)}\""
+                        "'#{v.iso8601(3)}'"
                     else
-                        v.to_s
+                        N1ql.sanitize(v).to_s
                     end
                 end
             end
@@ -89,11 +100,10 @@ module CouchbaseOrm
                 where = keys.each_with_index
                             .reject { |key, i| values.try(:[], i).nil? }
                             .map { |key, i| "#{key} = #{values[i] }" }
-                            .join(" and ")
-                "type=\"#{design_document}\" #{"and " + where unless where.blank?}"
+                            .join(" AND ")
+                "type=\"#{design_document}\" #{"AND " + where unless where.blank?}"
             end
 
-            #
             # order-by-clause ::= ORDER BY ordering-term [ ',' ordering-term ]*
             # ordering-term ::= expr [ ASC | DESC ] [ NULLS ( FIRST | LAST ) ]
             # see https://docs.couchbase.com/server/5.0/n1ql/n1ql-language-reference/orderby.html
