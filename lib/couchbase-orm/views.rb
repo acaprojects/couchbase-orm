@@ -79,7 +79,6 @@ EMAP
 
                 singleton_class.__send__(:define_method, name) do |**opts, &result_modifier|
                     opts = options.merge(opts)
-                    CouchbaseOrm.logger.debug "View - #{@design_document} #{name}"
 
                     if result_modifier
                         opts[:include_docs] = true
