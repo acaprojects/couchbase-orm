@@ -8,6 +8,7 @@ require 'couchbase-orm/views'
 require 'couchbase-orm/n1ql'
 require 'couchbase-orm/persistence'
 require 'couchbase-orm/associations'
+require 'couchbase-orm/proxies/bucket_proxy'
 require 'couchbase-orm/utilities/join'
 require 'couchbase-orm/utilities/enum'
 require 'couchbase-orm/utilities/index'
@@ -43,15 +44,15 @@ module CouchbaseOrm
 
         class << self
             def connect(**options)
-                @bucket = ::MTLibcouchbase::Bucket.new(**options)
+                @bucket = BucketProxy.new(::MTLibcouchbase::Bucket.new(**options))
             end
 
             def bucket=(bucket)
-                @bucket = bucket
+                @bucket = bucket.is_a?(BucketProxy) ? bucket : BucketProxy.new(bucket)
             end
 
             def bucket
-                @bucket ||= Connection.bucket
+                @bucket ||= BucketProxy.new(Connection.bucket)
             end
 
             def uuid_generator
