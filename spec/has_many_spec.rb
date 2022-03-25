@@ -38,7 +38,7 @@ shared_examples "has_many example" do |parameter|
         expect(docs).to eq([1, 2])
 
         first.destroy
-        expect { @rating_test_class.find rate.id }.to raise_error(::Libcouchbase::Error::KeyNotFound)
+        expect { @rating_test_class.find rate.id }.to raise_error(::MTLibcouchbase::Error::KeyNotFound)
         expect(@rating_test_class.all.count).to be(1)
     end
 

@@ -43,7 +43,7 @@ module CouchbaseOrm
 
         class << self
             def connect(**options)
-                @bucket = ::Libcouchbase::Bucket.new(**options)
+                @bucket = ::MTLibcouchbase::Bucket.new(**options)
             end
 
             def bucket=(bucket)
@@ -96,7 +96,7 @@ module CouchbaseOrm
                 ids = ids.flatten.select { |id| id.present? }
                 if ids.empty?
                     return nil if options[:quiet]
-                    raise Libcouchbase::Error::EmptyKey, 'no id(s) provided'
+                    raise MTLibcouchbase::Error::EmptyKey, 'no id(s) provided'
                 end
 
                 CouchbaseOrm.logger.debug "Data - Get #{ids}"
@@ -144,7 +144,7 @@ module CouchbaseOrm
 
             if model
                 case model
-                when ::Libcouchbase::Response
+                when ::MTLibcouchbase::Response
                     doc = model.value || raise('empty response provided')
                     type = doc.delete(:type)
                     doc.delete(:id)

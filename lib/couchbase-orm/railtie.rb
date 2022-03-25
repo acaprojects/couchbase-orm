@@ -35,10 +35,10 @@ module Rails #:nodoc:
             # @return [Hash] rescued responses
             def self.rescue_responses
                 {
-                    'Libcouchbase::Error::KeyNotFound' => :not_found,
-                    'Libcouchbase::Error::NotStored' => :unprocessable_entity,
-                    Libcouchbase::Error::KeyNotFound => :not_found,
-                    Libcouchbase::Error::NotStored => :unprocessable_entity
+                    'MTLibcouchbase::Error::KeyNotFound' => :not_found,
+                    'MTLibcouchbase::Error::NotStored' => :unprocessable_entity,
+                    MTLibcouchbase::Error::KeyNotFound => :not_found,
+                    MTLibcouchbase::Error::NotStored => :unprocessable_entity
                 }
             end
 
@@ -88,7 +88,7 @@ module Rails #:nodoc:
                         ::CouchbaseOrm::Base.descendants.each do |model|
                             model.ensure_design_document!
                         end
-                    rescue ::Libcouchbase::Error::Timedout, ::Libcouchbase::Error::ConnectError, ::Libcouchbase::Error::NetworkError
+                    rescue ::MTLibcouchbase::Error::Timedout, ::MTLibcouchbase::Error::ConnectError, ::MTLibcouchbase::Error::NetworkError
                         # skip connection errors for now
                     end
                 end
