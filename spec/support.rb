@@ -2,7 +2,7 @@
 
 
 if ENV['TRAVIS_TEST']
-    require 'libcouchbase'
+    require 'mt-libcouchbase'
     Libcouchbase::Defaults.username = 'tester'
     Libcouchbase::Defaults.password = 'password123'
 end

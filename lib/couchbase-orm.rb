@@ -1,7 +1,7 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-require 'libcouchbase'
-Libcouchbase.autoload(:QueryN1QL, 'ext/query_n1ql')
+require 'mt-libcouchbase'
+MTLibcouchbase.autoload(:QueryN1QL, 'ext/query_n1ql')
 
 module CouchbaseOrm
     autoload :Error,       'couchbase-orm/error'

@@ -1,6 +1,6 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-require 'libcouchbase'
+require 'mt-libcouchbase'
 
 module CouchbaseOrm
     class Connection
@@ -10,7 +10,7 @@ module CouchbaseOrm
         end
 
         def self.bucket
-            @bucket ||= ::Libcouchbase::Bucket.new(**@options)
+            @bucket ||= ::MTLibcouchbase::Bucket.new(**@options)
         end
     end
 end

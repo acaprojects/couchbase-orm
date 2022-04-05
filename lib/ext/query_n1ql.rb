@@ -1,6 +1,6 @@
 # frozen_string_literal: true, encoding: ASCII-8BIT
 
-module Libcouchbase
+module MTLibcouchbase
     class QueryN1QL
         N1P_QUERY_STATEMENT = 1
         N1P_CONSISTENCY_REQUEST = 2

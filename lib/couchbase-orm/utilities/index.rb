@@ -104,7 +104,7 @@ module CouchbaseOrm
                     if check_ref_id && check_ref_id.value == record.id
                         begin
                             record.class.bucket.delete(original_key, cas: check_ref_id.cas)
-                        rescue ::Libcouchbase::Error::KeyExists
+                        rescue ::MTLibcouchbase::Error::KeyExists
                             # Errors here can be ignored. Just means the key was updated elswhere
                         end
                     end
@@ -123,7 +123,7 @@ module CouchbaseOrm
                 if check_ref_id && check_ref_id.value == record.id
                     begin
                         record.class.bucket.delete(record.send(bucket_key_method), cas: check_ref_id.cas)
-                    rescue ::Libcouchbase::Error::KeyExists
+                    rescue ::MTLibcouchbase::Error::KeyExists
                         # Errors here can be ignored. Just means the key was updated elswhere
                     end
                 end

@@ -45,15 +45,15 @@ describe CouchbaseOrm::Associations do
             expect(parent.destroyed?).to be(false)
 
             # Ensure that parent has been destroyed
-            expect { Parent.find(id) }.to raise_error(Libcouchbase::Error::KeyNotFound)
+            expect { Parent.find(id) }.to raise_error(MTLibcouchbase::Error::KeyNotFound)
             expect(Parent.find_by_id(id)).to be(nil)
 
-            expect { parent.reload }.to raise_error(Libcouchbase::Error::KeyNotFound)
+            expect { parent.reload }.to raise_error(MTLibcouchbase::Error::KeyNotFound)
 
             # Save will always return true unless the model is changed (won't touch the database)
             parent.name = 'should fail'
-            expect { parent.save  }.to raise_error(Libcouchbase::Error::KeyNotFound)
-            expect { parent.save! }.to raise_error(Libcouchbase::Error::KeyNotFound)
+            expect { parent.save  }.to raise_error(MTLibcouchbase::Error::KeyNotFound)
+            expect { parent.save! }.to raise_error(MTLibcouchbase::Error::KeyNotFound)
         end
 
         it "should cache associations" do
