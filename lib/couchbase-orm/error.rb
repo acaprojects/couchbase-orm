@@ -9,7 +9,19 @@ module CouchbaseOrm
             super(message)
         end
 
-        class RecordInvalid < Error; end
+        class RecordInvalid < Error
+            def initialize(message = nil, record = nil)
+                if record
+                    errors = record.errors.full_messages.join(", ")
+                    message = I18n.t(
+                        :"couchbase.#{record.class.design_document}.errors.messages.record_invalid", 
+                        errors: errors, 
+                        default: :"couchbase.errors.messages.record_invalid"
+                    )
+                end
+                super(message, record)
+            end
+        end
         class RecordExists < Error; end
     end
 end
