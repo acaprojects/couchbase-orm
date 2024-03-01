@@ -53,7 +53,7 @@ module Rails #:nodoc:
             initializer 'couchbase.setup_connection' do
                 config_file = Rails.root.join('config', 'couchbase.yml')
                 if config_file.file? &&
-                    config = YAML.load(ERB.new(File.read(config_file)).result)[Rails.env]
+                    config = YAML.unsafe_load(ERB.new(File.read(config_file)).result)[Rails.env]
                     ::CouchbaseOrm::Connection.options = config.deep_symbolize_keys
                 end
             end
