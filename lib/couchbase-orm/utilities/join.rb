@@ -6,7 +6,7 @@ module CouchbaseOrm
         # methods for retrieving either model through the join model (e.g all
         # users who are in a group). model_a and model_b must be strings or symbols
         # and are assumed to be singularised, underscored versions of model names
-        def join(model_a, model_b, options={})
+        def join(model_a, model_b, **options)
             # store the join model names for use by has_many associations
             @join_models = [model_a.to_s, model_b.to_s]
 

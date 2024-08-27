@@ -99,7 +99,7 @@ module CouchbaseOrm
         # The record is simply removed, no callbacks are executed.
         def delete(with_cas: false, **options)
             options[:cas] = @__metadata__.cas if with_cas
-            self.class.bucket.delete(@__metadata__.key, options)
+            self.class.bucket.delete(@__metadata__.key, **options)
 
             @__metadata__.key = nil
             @id = nil
@@ -121,7 +121,7 @@ module CouchbaseOrm
                 destroy_associations!
 
                 options[:cas] = @__metadata__.cas if with_cas
-                self.class.bucket.delete(@__metadata__.key, options)
+                self.class.bucket.delete(@__metadata__.key, **options)
 
                 @__metadata__.key = nil
                 @id = nil
@@ -219,7 +219,7 @@ module CouchbaseOrm
 
 
         def _update_record(with_cas: false, **options)
-            return false unless perform_validations(:update, options)
+            return false unless perform_validations(:update, **options)
             return true unless changed?
 
             run_callbacks :update do
@@ -244,7 +244,7 @@ module CouchbaseOrm
         end
 
         def _create_record(**options)
-            return false unless perform_validations(:create, options)
+            return false unless perform_validations(:create, **options)
 
             run_callbacks :create do
                 run_callbacks :save do
@@ -265,7 +265,7 @@ module CouchbaseOrm
             end
         end
 
-        def perform_validations(context, options = {})
+        def perform_validations(context, **options)
             return valid?(context) if options[:validate] != false
             true
         end
